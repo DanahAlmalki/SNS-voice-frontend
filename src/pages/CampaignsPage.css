@@ -1,0 +1,143 @@
+.campaigns {
+  padding: var(--sp-8) clamp(var(--sp-4), 4vw, var(--sp-10));
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.campaigns__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-8);
+}
+
+.campaigns__title {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  margin: 0;
+}
+.campaigns__sub {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+/* ---------- Filters ---------- */
+.campaigns__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-5);
+}
+
+/* ---------- Table ---------- */
+.campaigns__table-panel {
+  padding: var(--sp-2);
+  overflow-x: auto;
+}
+
+.campaigns__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+
+.campaigns__table thead th {
+  text-align: start;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: var(--sp-4) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.campaigns__table tbody td {
+  padding: var(--sp-4) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+  vertical-align: middle;
+}
+.campaigns__table tbody tr:last-child td {
+  border-bottom: none;
+}
+.campaigns__table tbody tr {
+  transition: background 0.15s ease;
+}
+.campaigns__table tbody tr:hover {
+  background: var(--surface-muted);
+}
+
+.campaigns__name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.campaigns__cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.campaigns__cell svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.campaigns__empty {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ---------- Status badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3125rem 0.75rem;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge--completed {
+  background: #e8f3ec;
+  color: #2f7d4f;
+}
+.badge--progress {
+  background: var(--accent-weak);
+  color: var(--accent-text);
+}
+.badge--pending {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .campaigns__header {
+    align-items: stretch;
+  }
+  .campaigns__header .btn {
+    width: 100%;
+  }
+  .filter-field,
+  .filter-field--grow {
+    min-width: 100%;
+    flex: 1 1 100%;
+  }
+  .campaigns__filters .btn {
+    width: 100%;
+  }
+}

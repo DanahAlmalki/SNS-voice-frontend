@@ -1,0 +1,239 @@
+.new-campaign {
+  padding: var(--sp-8) clamp(var(--sp-4), 4vw, var(--sp-10));
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+.new-campaign__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-8);
+}
+.new-campaign__heading {
+  flex: 1;
+  min-width: 200px;
+}
+.new-campaign__title {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  margin: 0;
+}
+.new-campaign__sub {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+.new-campaign__actions {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* ---------- Two-column split (right: import, left: config) ---------- */
+.new-campaign__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+.nc-col__head {
+  margin-bottom: var(--sp-5);
+}
+.nc-col__title {
+  font-size: 1.125rem;
+  margin: 0;
+}
+.nc-col__desc {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ---------- Import column ---------- */
+.nc-import {
+  padding: var(--sp-6);
+  position: sticky;
+  top: var(--sp-6);
+}
+
+.nc-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  text-align: center;
+  padding: var(--sp-10) var(--sp-6);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.nc-drop:hover,
+.nc-drop:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  outline: none;
+}
+.nc-drop.is-dragging {
+  border-color: var(--accent);
+  background: var(--accent-weak-2);
+}
+.nc-drop__icon {
+  color: var(--accent);
+}
+.nc-drop__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+.nc-drop__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Uploaded files ---------- */
+.nc-files {
+  list-style: none;
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.nc-files__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.nc-files__icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.nc-files__name {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nc-files__size {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nc-files__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.nc-files__remove:hover {
+  background: var(--danger-weak);
+  color: var(--danger);
+}
+
+/* ---------- Segmentation inside import panel ---------- */
+.nc-import__seg-head {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Config column ---------- */
+.nc-config {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.nc-card {
+  padding: var(--sp-5);
+}
+.nc-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.nc-card__icon {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.nc-card__title {
+  margin: 0;
+  font-size: 1rem;
+}
+.nc-card__desc {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.nc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+.nc-fields .filter-field {
+  min-width: 160px;
+  flex: 1;
+}
+
+.nc-check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex: 1 1 100%;
+}
+.nc-check input {
+  width: auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .new-campaign__grid {
+    grid-template-columns: 1fr;
+  }
+  .nc-import {
+    position: static;
+  }
+}
+@media (max-width: 640px) {
+  .new-campaign__actions {
+    width: 100%;
+  }
+  .new-campaign__actions .btn {
+    flex: 1;
+  }
+  .nc-fields .filter-field {
+    min-width: 100%;
+  }
+}
