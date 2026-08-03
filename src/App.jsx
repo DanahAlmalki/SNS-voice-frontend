@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Home, ClipboardList } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import Layout from "./components/Layout.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 import TemplatesPage from "./pages/TemplatesPage.jsx";
 import CampaignsPage from "./pages/CampaignsPage.jsx";
 import NewCampaignPage from "./pages/NewCampaignPage.jsx";
@@ -14,10 +15,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<Layout />}>
-          <Route
-            path="/"
-            element={<Placeholder title="الرئيسية" icon={Home} />}
-          />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/campaigns" element={<CampaignsPage />} />
           <Route path="/campaigns/new" element={<NewCampaignPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
