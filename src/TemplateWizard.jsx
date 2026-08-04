@@ -13,6 +13,8 @@ import {
   ClipboardList,
   Gift,
 } from "lucide-react";
+import PromptModal from "./components/PromptModal";
+import { buildPrompt } from "./lib/buildPrompt";
 import "./TemplateWizard.css";
 
 const STEPS = [
@@ -101,6 +103,7 @@ const initialData = {
 export default function TemplateWizard() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState(initialData);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
 
@@ -181,12 +184,18 @@ export default function TemplateWizard() {
         <aside className="wizard__preview">
           <h3 className="preview__title">معاينة مباشرة</h3>
           <ScriptPreview data={data} />
-          <button className="btn btn--test">
+          <button className="btn btn--test" onClick={() => setShowPrompt(true)}>
             <Play size={16} />
             اتصال تجريبي
           </button>
         </aside>
       </div>
+
+      <PromptModal
+        open={showPrompt}
+        onClose={() => setShowPrompt(false)}
+        prompt={buildPrompt(data)}
+      />
     </div>
   );
 }
@@ -232,7 +241,7 @@ function BasicsStep({ data, set }) {
           placeholder="مثال: شركة أكمي"
         />
       </Field>
-      <Field label="ماذا تبيع؟" hint="يساعد الوكيل على فهم السياق">
+      <Field label="صف شركتك أو جهتك" hint="يساعد الوكيل على فهم السياق">
         <textarea
           value={data.product}
           onChange={(e) => set({ product: e.target.value })}
