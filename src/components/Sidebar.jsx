@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutTemplate,
   ClipboardList,
+  Waypoints,
   ChevronsRight,
   ChevronsLeft,
 } from "lucide-react";
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { to: "/", label: "الرئيسية", img: homeIcon, end: true },
   { to: "/templates", label: "القوالب", icon: LayoutTemplate },
   { to: "/campaigns", label: "الحملات", img: campaignIcon },
+  { to: "/campaign-map", label: "خريطة الحملات", icon: Waypoints },
   { to: "/records", label: "السجلات", icon: ClipboardList },
 ];
 

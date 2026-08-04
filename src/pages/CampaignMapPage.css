@@ -1,0 +1,221 @@
+.cmap {
+  padding: var(--sp-8) clamp(var(--sp-4), 4vw, var(--sp-10));
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+.cmap__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-6);
+}
+.cmap__title {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  margin: 0;
+}
+.cmap__sub {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  max-width: 60ch;
+}
+
+.cmap__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.cmap__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.cmap__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-full);
+}
+.cmap__dot--template {
+  background: var(--accent);
+}
+.cmap__dot--campaign {
+  background: var(--vibrant);
+}
+.cmap__dot--audience {
+  background: #2f7d4f;
+}
+
+/* ---------- Canvas ---------- */
+.cmap__canvas-wrap {
+  padding: 0;
+  overflow: auto;
+}
+.cmap__canvas {
+  position: relative;
+  margin: 0 auto;
+}
+
+.cmap__col-label {
+  position: absolute;
+  top: var(--sp-5);
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+.cmap__edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.cmap__edge {
+  fill: none;
+  stroke-width: 2;
+  transition:
+    opacity 0.18s ease,
+    stroke-width 0.18s ease;
+}
+.cmap__edge--template {
+  stroke: var(--accent);
+  opacity: 0.35;
+}
+.cmap__edge--audience {
+  stroke: #2f7d4f;
+  opacity: 0.35;
+}
+.cmap__edge.is-dim {
+  opacity: 0.08;
+}
+.cmap__edge.is-active {
+  opacity: 0.95;
+  stroke-width: 3;
+}
+
+/* ---------- Nodes ---------- */
+.cmap-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    opacity 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease,
+    border-color 0.18s ease;
+  cursor: default;
+}
+.cmap-node:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.cmap-node.is-dim {
+  opacity: 0.32;
+}
+
+.cmap-node__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  color: #fff;
+}
+.cmap-node--template .cmap-node__icon {
+  background: var(--accent);
+}
+.cmap-node--campaign .cmap-node__icon {
+  background: var(--vibrant);
+}
+.cmap-node--audience .cmap-node__icon {
+  background: #2f7d4f;
+}
+
+.cmap-node--campaign {
+  border-color: var(--border-strong);
+}
+.cmap-node--template {
+  border-inline-start: 3px solid var(--accent);
+}
+.cmap-node--audience {
+  border-inline-end: 3px solid #2f7d4f;
+}
+
+.cmap-node__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cmap-node__name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmap-node__meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Badges ---------- */
+.cmap-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--r-full);
+}
+.cmap-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.cmap-badge--completed {
+  background: #e8f3ec;
+  color: #2f7d4f;
+}
+.cmap-badge--progress {
+  background: var(--accent-weak);
+  color: var(--accent-text);
+}
+.cmap-badge--pending {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .cmap__header {
+    align-items: stretch;
+  }
+  .cmap__legend {
+    flex-wrap: wrap;
+    gap: var(--sp-3) var(--sp-4);
+  }
+}

@@ -3,6 +3,7 @@ import { Home, ClipboardList } from "lucide-react";
 import Layout from "./components/Layout.jsx";
 import TemplatesPage from "./pages/TemplatesPage.jsx";
 import CampaignsPage from "./pages/CampaignsPage.jsx";
+import CampaignMapPage from "./pages/CampaignMapPage.jsx";
 import NewCampaignPage from "./pages/NewCampaignPage.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -20,6 +21,7 @@ export default function App() {
           />
           <Route path="/campaigns" element={<CampaignsPage />} />
           <Route path="/campaigns/new" element={<NewCampaignPage />} />
+          <Route path="/campaign-map" element={<CampaignMapPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/templates/new" element={<TemplateWizard />} />
           <Route
