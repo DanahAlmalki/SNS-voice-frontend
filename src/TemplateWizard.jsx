@@ -13,7 +13,7 @@ import {
   ClipboardList,
   Gift,
 } from "lucide-react";
-import PromptModal from "./components/PromptModal";
+import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
 import "./TemplateWizard.css";
 
@@ -103,7 +103,7 @@ const initialData = {
 export default function TemplateWizard() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState(initialData);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [showCall, setShowCall] = useState(false);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
 
@@ -184,16 +184,16 @@ export default function TemplateWizard() {
         <aside className="wizard__preview">
           <h3 className="preview__title">معاينة مباشرة</h3>
           <ScriptPreview data={data} />
-          <button className="btn btn--test" onClick={() => setShowPrompt(true)}>
+          <button className="btn btn--test" onClick={() => setShowCall(true)}>
             <Play size={16} />
             اتصال تجريبي
           </button>
         </aside>
       </div>
 
-      <PromptModal
-        open={showPrompt}
-        onClose={() => setShowPrompt(false)}
+      <CallModal
+        open={showCall}
+        onClose={() => setShowCall(false)}
         prompt={buildPrompt(data)}
       />
     </div>
