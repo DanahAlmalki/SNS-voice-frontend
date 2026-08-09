@@ -156,10 +156,6 @@ export default function CampaignMapPage() {
       <header className="cmap__header">
         <div className="cmap__heading">
           <h1 className="cmap__title">خريطة الحملات</h1>
-          <p className="cmap__sub">
-            عرض مرئي للعلاقات بين الحملات والقوالب وملفات الجمهور. مرّر المؤشر
-            فوق أي عنصر لإبراز ارتباطاته.
-          </p>
         </div>
         <ul className="cmap__legend">
           <li>
