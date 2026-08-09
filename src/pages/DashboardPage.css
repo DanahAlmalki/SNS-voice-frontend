@@ -14,13 +14,13 @@
 }
 
 .dashboard__title {
-  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
   margin: 0;
 }
 .dashboard__sub {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
 }
 
 /* ---------- Date range ---------- */
@@ -29,7 +29,6 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-2);
-  margin-top: var(--sp-4);
 }
 .dashboard__range-controls {
   display: flex;
@@ -55,7 +54,7 @@
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -77,7 +76,7 @@
   align-items: center;
   gap: var(--sp-1);
   padding: 0.35rem 0.85rem;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
   background: transparent;
@@ -109,7 +108,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: 0.3rem 0.6rem;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
   background: var(--surface);
@@ -118,7 +117,7 @@
 }
 .range-date input[type="date"] {
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   color: var(--text);
   border: none;
   background: transparent;
@@ -128,8 +127,8 @@
   outline: none;
 }
 .dashboard__range-label {
-  align-self: center;
-  font-size: 0.625rem;
+  align-self: flex-start;
+  font-size: var(--fs-3xs);
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -159,18 +158,18 @@
 }
 .stat-card__label {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 .stat-card__value {
   margin: var(--sp-1) 0 0;
-  font-size: 1.625rem;
+  font-size: var(--fs-2xl);
   font-weight: 700;
   color: var(--text);
-  line-height: 1.2;
+  line-height: var(--lh-tight);
 }
 .stat-card__suffix {
-  font-size: 1rem;
+  font-size: var(--fs-base);
   font-weight: 600;
   color: var(--text-muted);
   margin-inline-start: 2px;
@@ -180,7 +179,7 @@
   align-items: center;
   gap: var(--sp-1);
   margin: var(--sp-3) 0 0;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
 }
 .stat-card__delta.is-up {
@@ -207,7 +206,7 @@
 }
 .dashboard__panel-title {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--fs-md);
 }
 
 /* ---------- Bar chart ---------- */
@@ -231,7 +230,7 @@
   height: 100%;
 }
 .bar-chart__value {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--text-secondary);
 }
@@ -245,15 +244,23 @@
 .bar-chart__fill {
   width: 100%;
   border-radius: var(--r-sm) var(--r-sm) 0 0;
-  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--accent) 0%,
+    var(--accent-hover) 100%
+  );
   min-height: 4px;
   transition: height 0.4s ease;
 }
 .bar-chart__col:last-child .bar-chart__fill {
-  background: linear-gradient(180deg, var(--border-strong) 0%, var(--border) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--border-strong) 0%,
+    var(--border) 100%
+  );
 }
 .bar-chart__label {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -283,12 +290,12 @@
   flex-shrink: 0;
 }
 .outcomes__label {
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
 }
 .outcomes__value {
   margin-inline-start: auto;
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--text);
   display: inline-flex;
@@ -296,7 +303,7 @@
   gap: var(--sp-2);
 }
 .outcomes__pct {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -358,12 +365,12 @@
   margin-bottom: var(--sp-2);
 }
 .camp-row__name {
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
 }
 .camp-row__calls {
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -377,7 +384,11 @@
 .camp-row__fill {
   height: 100%;
   border-radius: var(--r-full);
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent-hover) 100%
+  );
   transition: width 0.4s ease;
 }
 .camp-row__meta {
@@ -386,7 +397,7 @@
   justify-content: space-between;
   gap: var(--sp-3);
   margin-top: var(--sp-2);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
 .camp-row__rate {

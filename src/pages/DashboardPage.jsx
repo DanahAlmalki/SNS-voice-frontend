@@ -76,10 +76,14 @@ function buildDailyData(today) {
     const dayCalls = Math.round(base * seasonal * noise);
 
     const campaigns = CAMPAIGNS.map((c, ci) => {
-      const calls = Math.round(dayCalls * c.weight * (0.85 + rand(i + ci) * 0.3));
+      const calls = Math.round(
+        dayCalls * c.weight * (0.85 + rand(i + ci) * 0.3),
+      );
       const successRate =
-        Math.min(95, Math.max(40, c.baseRate + (rand(i + ci + 50) - 0.5) * 12)) /
-        100;
+        Math.min(
+          95,
+          Math.max(40, c.baseRate + (rand(i + ci + 50) - 0.5) * 12),
+        ) / 100;
       const noAnswerRate = 0.16 + rand(i + ci + 200) * 0.08;
       const success = Math.round(calls * successRate);
       const no_answer = Math.round(calls * noAnswerRate);
@@ -293,11 +297,6 @@ export default function DashboardPage() {
     <div className="dashboard">
       <header className="dashboard__header">
         <div className="dashboard__heading">
-          <h1 className="dashboard__title">لوحة التحكم</h1>
-          <p className="dashboard__sub">
-            نظرة عامة على أداء المكالمات والحملات.
-          </p>
-
           <div className="dashboard__range">
             <div className="dashboard__range-controls">
               <div className="range-toggle" role="tablist">
@@ -496,9 +495,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="camp-row__meta">
                   <span>{share}% من المكالمات</span>
-                  <span className="camp-row__rate">
-                    نسبة النجاح {c.rate}%
-                  </span>
+                  <span className="camp-row__rate">نسبة النجاح {c.rate}%</span>
                 </div>
               </li>
             );
