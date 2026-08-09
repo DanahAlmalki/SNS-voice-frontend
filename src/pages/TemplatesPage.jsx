@@ -101,9 +101,6 @@ export default function TemplatesPage() {
       <header className="templates__header">
         <div className="templates__heading">
           <h1 className="templates__title">القوالب</h1>
-          <p className="templates__sub">
-            قوالب المكالمات الصادرة الجاهزة للاستخدام.
-          </p>
         </div>
         <button
           className="btn btn--primary"
@@ -114,11 +111,8 @@ export default function TemplatesPage() {
         </button>
       </header>
 
-      <section className="panel templates__filters">
+      <section className="templates__filters">
         <div className="filter-field filter-field--grow">
-          <label className="filter-label" htmlFor="template-search">
-            بحث
-          </label>
           <div className="filter-search">
             <Search size={16} className="filter-search__icon" />
             <input
@@ -132,9 +126,6 @@ export default function TemplatesPage() {
         </div>
 
         <div className="filter-field">
-          <label className="filter-label" htmlFor="template-objective">
-            الهدف
-          </label>
           <select
             id="template-objective"
             value={objective}
@@ -150,9 +141,6 @@ export default function TemplatesPage() {
         </div>
 
         <div className="filter-field">
-          <label className="filter-label" htmlFor="template-voice">
-            الصوت
-          </label>
           <select
             id="template-voice"
             value={voice}

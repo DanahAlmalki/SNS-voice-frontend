@@ -14,22 +14,21 @@
 }
 
 .templates__title {
-  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
   margin: 0;
 }
 .templates__sub {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
 }
 
 /* Filters */
 .templates__filters {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  padding: var(--sp-5);
   margin-bottom: var(--sp-5);
 }
 
@@ -69,11 +68,11 @@
 }
 .tpl-card__name {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--fs-md);
 }
 .tpl-card__desc {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: 1.7;
   flex: 1;
@@ -87,7 +86,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
 .tpl-card__updated svg {
