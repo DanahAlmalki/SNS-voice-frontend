@@ -22,9 +22,9 @@
 .placeholder__box h1 {
   color: var(--text);
   margin: 0 0 var(--sp-2);
-  font-size: 1.375rem;
+  font-size: var(--fs-xl);
 }
 .placeholder__box p {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
 }

@@ -42,7 +42,7 @@
 }
 
 .login__title {
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: clamp(var(--fs-4xl), 4vw, var(--fs-6xl));
   font-weight: 700;
   margin: 0 0 var(--sp-8);
 }
@@ -65,7 +65,7 @@
   text-align: left;
   color: #2563eb;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 .login__forgot:hover {
@@ -119,7 +119,7 @@
   color: #fff;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
   opacity: 0.92;
   transition: opacity 0.15s ease;
 }

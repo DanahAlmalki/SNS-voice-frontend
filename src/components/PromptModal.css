@@ -32,7 +32,7 @@
 }
 .modal__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 .modal__close {
   display: inline-flex;
@@ -57,7 +57,7 @@
   background: var(--surface-muted);
   color: var(--text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;

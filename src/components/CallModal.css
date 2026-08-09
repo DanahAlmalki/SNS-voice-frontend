@@ -48,7 +48,9 @@
   padding: 0.4rem 0.9rem;
   border-radius: var(--r-sm);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .call-tab.is-active {
   background: var(--surface);
@@ -105,7 +107,11 @@
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(
+    160deg,
+    var(--accent) 0%,
+    var(--accent-hover) 100%
+  );
   box-shadow: var(--shadow-md);
   transition: transform 0.12s ease;
 }
@@ -128,7 +134,11 @@
 /* Listening: core scales with mic level */
 .agent-orb.is-listening .agent-orb__core {
   transform: scale(calc(1 + (var(--vad) * 0.18)));
-  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-active) 100%);
+  background: linear-gradient(
+    160deg,
+    var(--accent) 0%,
+    var(--accent-active) 100%
+  );
   animation: none;
 }
 .agent-orb.is-listening .agent-orb__ring {
@@ -140,7 +150,11 @@
 
 /* Speaking: energetic pulsing rings + core */
 .agent-orb.is-speaking .agent-orb__core {
-  background: linear-gradient(160deg, var(--vibrant) 0%, var(--vibrant-hover) 100%);
+  background: linear-gradient(
+    160deg,
+    var(--vibrant) 0%,
+    var(--vibrant-hover) 100%
+  );
   animation: orb-pulse 0.9s ease-in-out infinite;
 }
 .agent-orb.is-speaking .agent-orb__ring {
@@ -157,22 +171,40 @@
 }
 
 @keyframes orb-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 @keyframes orb-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
 }
 @keyframes orb-ripple {
-  0% { opacity: 0.35; transform: scale(0.85); }
-  100% { opacity: 0; transform: scale(1.5); }
+  0% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
 }
 .spin {
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .call-status {
@@ -203,7 +235,7 @@
   max-width: 80%;
   padding: 0.55rem 0.85rem;
   border-radius: var(--r-md);
-  font-size: 0.9rem;
+  font-size: var(--fs-sm);
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
@@ -264,7 +296,7 @@
   background: var(--surface-muted);
   color: var(--text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
