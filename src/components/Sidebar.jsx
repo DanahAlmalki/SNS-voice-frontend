@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
+  Home,
   LayoutTemplate,
+  Megaphone,
   ClipboardList,
   Waypoints,
   ChevronsRight,
   ChevronsLeft,
 } from "lucide-react";
 import icon from "../assets/icon.svg";
-import homeIcon from "../assets/home.svg";
-import campaignIcon from "../assets/campaign.svg";
 import "./Sidebar.css";
 
 const NAV_ITEMS = [
-  { to: "/", label: "الرئيسية", img: homeIcon, end: true },
+  { to: "/", label: "الرئيسية", icon: Home, end: true },
   { to: "/templates", label: "القوالب", icon: LayoutTemplate },
-  { to: "/campaigns", label: "الحملات", img: campaignIcon },
+  { to: "/campaigns", label: "الحملات", icon: Megaphone },
   { to: "/campaign-map", label: "خريطة الحملات", icon: Waypoints },
   { to: "/records", label: "السجلات", icon: ClipboardList },
 ];
@@ -61,17 +61,7 @@ export default function Sidebar() {
               title={item.label}
             >
               <span className="sidebar__icon">
-                {item.img ? (
-                  <span
-                    className="sidebar__icon-img"
-                    style={{
-                      maskImage: `url(${item.img})`,
-                      WebkitMaskImage: `url(${item.img})`,
-                    }}
-                  />
-                ) : (
-                  <Icon size={20} strokeWidth={2} />
-                )}
+                <Icon size={20} strokeWidth={2} />
               </span>
               <span className="sidebar__label">{item.label}</span>
             </NavLink>
