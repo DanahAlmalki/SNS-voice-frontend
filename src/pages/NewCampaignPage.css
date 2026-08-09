@@ -1,5 +1,5 @@
 .new-campaign {
-  padding: var(--sp-8) clamp(var(--sp-4), 4vw, var(--sp-10));
+  padding: var(--sp-6) clamp(var(--sp-4), 4vw, var(--sp-8));
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -10,51 +10,66 @@
   align-items: center;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  margin-bottom: var(--sp-8);
+  margin-bottom: var(--sp-5);
 }
 .new-campaign__heading {
   flex: 1;
   min-width: 200px;
 }
 .new-campaign__title {
-  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
   margin: 0;
 }
 .new-campaign__sub {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
 }
 .new-campaign__actions {
   display: flex;
   gap: var(--sp-3);
   flex-wrap: wrap;
 }
+.new-campaign__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.new-campaign__back:hover {
+  color: var(--text);
+}
 
 /* ---------- Two-column split (right: import, left: config) ---------- */
 .new-campaign__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-6);
+  gap: var(--sp-5);
   align-items: start;
 }
 
 .nc-col__head {
-  margin-bottom: var(--sp-5);
+  margin-bottom: var(--sp-4);
 }
 .nc-col__title {
-  font-size: 1.125rem;
+  font-size: var(--fs-md);
   margin: 0;
 }
 .nc-col__desc {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
 }
 
 /* ---------- Import column ---------- */
 .nc-import {
-  padding: var(--sp-6);
+  padding: var(--sp-5);
   position: sticky;
   top: var(--sp-6);
 }
@@ -65,7 +80,7 @@
   align-items: center;
   gap: var(--sp-3);
   text-align: center;
-  padding: var(--sp-10) var(--sp-6);
+  padding: var(--sp-6) var(--sp-5);
   border: 2px dashed var(--border-strong);
   border-radius: var(--r-lg);
   background: var(--surface-muted);
@@ -94,14 +109,14 @@
 }
 .nc-drop__hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
 
 /* ---------- Uploaded files ---------- */
 .nc-files {
   list-style: none;
-  margin: var(--sp-5) 0 0;
+  margin: var(--sp-4) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -122,14 +137,14 @@
 }
 .nc-files__name {
   flex: 1;
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .nc-files__size {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -156,8 +171,8 @@
 
 /* ---------- Segmentation inside import panel ---------- */
 .nc-import__seg-head {
-  margin-top: var(--sp-6);
-  padding-top: var(--sp-6);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
   border-top: 1px solid var(--border);
 }
 
@@ -165,16 +180,16 @@
 .nc-config {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
 }
 .nc-card {
-  padding: var(--sp-5);
+  padding: var(--sp-4);
 }
 .nc-card__head {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
 .nc-card__icon {
   color: var(--accent);
@@ -183,12 +198,12 @@
 }
 .nc-card__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 .nc-card__desc {
   margin: var(--sp-1) 0 0;
   color: var(--text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   line-height: 1.5;
 }
 
@@ -206,7 +221,7 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  font-size: 0.875rem;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
   cursor: pointer;
   flex: 1 1 100%;

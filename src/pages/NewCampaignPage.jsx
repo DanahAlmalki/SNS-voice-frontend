@@ -46,7 +46,7 @@ export default function NewCampaignPage() {
     <div className="new-campaign" dir="rtl">
       <header className="new-campaign__header">
         <button
-          className="btn btn--ghost btn--sm"
+          className="new-campaign__back"
           onClick={() => navigate("/campaigns")}
         >
           <ArrowRight size={16} />
@@ -54,9 +54,6 @@ export default function NewCampaignPage() {
         </button>
         <div className="new-campaign__heading">
           <h1 className="new-campaign__title">حملة جديدة</h1>
-          <p className="new-campaign__sub">
-            استورد الجمهور واضبط إعدادات الحملة قبل الإطلاق.
-          </p>
         </div>
         <div className="new-campaign__actions">
           <button
@@ -144,10 +141,6 @@ export default function NewCampaignPage() {
             <Filter size={18} className="nc-card__icon" />
             <div>
               <h3 className="nc-card__title">التقسيم</h3>
-              <p className="nc-card__desc">
-                تصفية الجمهور حسب الخصائص الديموغرافية أو السلوك أو حالة الحساب
-                أو الحقول المخصصة.
-              </p>
             </div>
           </div>
           <div className="nc-fields">
