@@ -80,9 +80,6 @@ export default function CampaignsPage() {
       <header className="campaigns__header">
         <div className="campaigns__heading">
           <h1 className="campaigns__title">الحملات</h1>
-          <p className="campaigns__sub">
-            إدارة ومتابعة حملات المكالمات الصادرة.
-          </p>
         </div>
         <button
           className="btn btn--primary"
@@ -93,11 +90,8 @@ export default function CampaignsPage() {
         </button>
       </header>
 
-      <section className="panel campaigns__filters">
+      <section className="campaigns__filters">
         <div className="filter-field filter-field--grow">
-          <label className="filter-label" htmlFor="campaign-search">
-            بحث
-          </label>
           <div className="filter-search">
             <Search size={16} className="filter-search__icon" />
             <input
@@ -111,9 +105,6 @@ export default function CampaignsPage() {
         </div>
 
         <div className="filter-field">
-          <label className="filter-label" htmlFor="campaign-status">
-            الحالة
-          </label>
           <select
             id="campaign-status"
             value={status}
@@ -127,9 +118,6 @@ export default function CampaignsPage() {
         </div>
 
         <div className="filter-field">
-          <label className="filter-label" htmlFor="campaign-template">
-            القالب
-          </label>
           <select
             id="campaign-template"
             value={template}

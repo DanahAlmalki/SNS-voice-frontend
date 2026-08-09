@@ -14,22 +14,21 @@
 }
 
 .campaigns__title {
-  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
   margin: 0;
 }
 .campaigns__sub {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
 }
 
 /* ---------- Filters ---------- */
 .campaigns__filters {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  padding: var(--sp-5);
   margin-bottom: var(--sp-5);
 }
 
@@ -47,7 +46,7 @@
 
 .campaigns__table thead th {
   text-align: start;
-  font-size: 0.8125rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--text-muted);
   padding: var(--sp-4) var(--sp-4);
@@ -58,7 +57,7 @@
 .campaigns__table tbody td {
   padding: var(--sp-4) var(--sp-4);
   border-bottom: 1px solid var(--border);
-  font-size: 0.9375rem;
+  font-size: var(--fs-sm);
   vertical-align: middle;
 }
 .campaigns__table tbody tr:last-child td {
@@ -99,7 +98,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   padding: 0.3125rem 0.75rem;
   border-radius: var(--r-full);
