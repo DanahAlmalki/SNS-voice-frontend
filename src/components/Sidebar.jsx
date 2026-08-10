@@ -1,15 +1,21 @@
-import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 import {
   Home,
   LayoutTemplate,
   Megaphone,
   ClipboardList,
   Waypoints,
+  Settings,
+  CircleHelp,
+  Sun,
+  Moon,
+  LogOut,
   ChevronsRight,
   ChevronsLeft,
 } from "lucide-react";
 import icon from "../assets/icon.svg";
+import { applyScheme, loadScheme, saveScheme } from "../theme.js";
 import "./Sidebar.css";
 
 const NAV_ITEMS = [
@@ -20,13 +26,43 @@ const NAV_ITEMS = [
   { to: "/records", label: "السجلات", icon: ClipboardList },
 ];
 
+const SUPPORT_ITEMS = [
+  { to: "/settings", label: "الإعدادات", icon: Settings },
+  { to: "/help", label: "المساعدة", icon: CircleHelp },
+];
+
+const SCHEMES = [
+  { key: "light", label: "فاتح", icon: Sun },
+  { key: "dark", label: "داكن", icon: Moon },
+];
+
+function SidebarLink({ item }) {
+  const Icon = item.icon;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) =>
+        `sidebar__link ${isActive ? "is-active" : ""}`
+      }
+      title={item.label}
+    >
+      <span className="sidebar__icon">
+        <Icon size={20} strokeWidth={2} />
+      </span>
+      <span className="sidebar__label">{item.label}</span>
+    </NavLink>
+  );
+}
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { pathname } = useLocation();
+  const [scheme, setScheme] = useState(loadScheme);
 
-  const activeIndex = NAV_ITEMS.findIndex((item) =>
-    item.end ? pathname === item.to : pathname.startsWith(item.to),
-  );
+  useEffect(() => {
+    applyScheme(scheme);
+    saveScheme(scheme);
+  }, [scheme]);
 
   return (
     <aside
@@ -40,33 +76,51 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav
-        className={`sidebar__nav ${activeIndex < 0 ? "is-none" : ""}`}
-        style={{
-          "--active-index": Math.max(activeIndex, 0),
-          "--nav-count": NAV_ITEMS.length,
-        }}
-      >
-        <span className="sidebar__nav-indicator" aria-hidden="true" />
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `sidebar__link ${isActive ? "is-active" : ""}`
-              }
-              title={item.label}
-            >
-              <span className="sidebar__icon">
-                <Icon size={20} strokeWidth={2} />
-              </span>
-              <span className="sidebar__label">{item.label}</span>
-            </NavLink>
-          );
-        })}
+      <nav className="sidebar__nav">
+        <div className="sidebar__group">
+          {NAV_ITEMS.map((item) => (
+            <SidebarLink key={item.to} item={item} />
+          ))}
+        </div>
+
+        <div className="sidebar__group sidebar__group--support">
+          {SUPPORT_ITEMS.map((item) => (
+            <SidebarLink key={item.to} item={item} />
+          ))}
+        </div>
+
+        <div className="sidebar__group sidebar__group--footer">
+          <div
+            className={`sidebar__theme ${scheme === "dark" ? "is-dark" : ""}`}
+            role="group"
+            aria-label="مظهر الواجهة"
+          >
+            <span className="sidebar__theme-thumb" aria-hidden="true" />
+            {SCHEMES.map((s) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  className={`sidebar__theme-btn ${
+                    scheme === s.key ? "is-active" : ""
+                  }`}
+                  onClick={() => setScheme(s.key)}
+                  aria-pressed={scheme === s.key}
+                  title={s.label}
+                >
+                  <Icon size={14} strokeWidth={2} />
+                  <span className="sidebar__label">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <Link className="sidebar__logout" to="/login">
+            <LogOut size={16} strokeWidth={2} />
+            <span className="sidebar__label">تسجيل الخروج</span>
+          </Link>
+        </div>
       </nav>
 
       <button

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Settings, CircleHelp } from "lucide-react";
 import Layout from "./components/Layout.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import TemplatesPage from "./pages/TemplatesPage.jsx";
@@ -25,6 +25,14 @@ export default function App() {
           <Route
             path="/records"
             element={<Placeholder title="السجلات" icon={ClipboardList} />}
+          />
+          <Route
+            path="/settings"
+            element={<Placeholder title="الإعدادات" icon={Settings} />}
+          />
+          <Route
+            path="/help"
+            element={<Placeholder title="المساعدة" icon={CircleHelp} />}
           />
         </Route>
       </Routes>

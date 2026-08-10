@@ -41,7 +41,6 @@
 
 .tpl-card {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
   display: flex;
@@ -51,12 +50,10 @@
   box-shadow: var(--shadow-sm);
   transition:
     box-shadow 0.18s ease,
-    transform 0.18s ease,
-    border-color 0.18s ease;
+    transform 0.18s ease;
 }
 .tpl-card:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--border-strong);
   transform: translateY(-2px);
 }
 

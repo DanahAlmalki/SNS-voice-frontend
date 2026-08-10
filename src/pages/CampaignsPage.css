@@ -49,25 +49,32 @@
   font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--text-muted);
-  padding: var(--sp-4) var(--sp-4);
-  border-bottom: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-muted);
   white-space: nowrap;
+}
+.campaigns__table thead th:first-child {
+  border-start-start-radius: var(--r-md);
+  border-end-start-radius: var(--r-md);
+}
+.campaigns__table thead th:last-child {
+  border-start-end-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
 }
 
 .campaigns__table tbody td {
   padding: var(--sp-4) var(--sp-4);
-  border-bottom: 1px solid var(--border);
   font-size: var(--fs-sm);
   vertical-align: middle;
-}
-.campaigns__table tbody tr:last-child td {
-  border-bottom: none;
 }
 .campaigns__table tbody tr {
   transition: background 0.15s ease;
 }
+.campaigns__table tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.025);
+}
 .campaigns__table tbody tr:hover {
-  background: var(--surface-muted);
+  background: var(--accent-weak);
 }
 
 .campaigns__name {

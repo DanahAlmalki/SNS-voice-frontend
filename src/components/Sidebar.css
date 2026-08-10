@@ -83,17 +83,97 @@
 
 .sidebar__nav {
   position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--sp-5);
   margin-inline: calc(var(--sp-4) * -1);
 }
 
-.sidebar__nav-indicator {
-  display: none;
+.sidebar__group {
+  display: flex;
+  flex-direction: column;
 }
-.sidebar__nav.is-none .sidebar__nav-indicator {
-  opacity: 0;
+.sidebar__group--support {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: var(--sp-3);
+}
+/* Pinned near the bottom of the sidebar */
+.sidebar__group--footer {
+  margin-top: auto;
+  margin-bottom: var(--sp-5);
+  gap: var(--sp-6);
+  padding-inline: var(--sp-4);
+}
+
+.sidebar__theme {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--r-full);
+}
+/* Slides between the two options */
+.sidebar__theme-thumb {
+  position: absolute;
+  inset-block: 2px;
+  inset-inline-start: 2px;
+  width: calc(50% - 2px);
+  border-radius: var(--r-full);
+  background: var(--sidebar-hover);
+  transition: inset-inline-start 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar__theme.is-dark .sidebar__theme-thumb {
+  inset-inline-start: 50%;
+}
+.sidebar__theme-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: 0.25rem 0.4rem;
+  border: none;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+.sidebar__theme-btn:hover {
+  color: #fff;
+}
+.sidebar__theme-btn.is-active {
+  color: #fff;
+}
+.sidebar__theme-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.4);
+}
+
+.sidebar__logout {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--sidebar-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+.sidebar__logout svg {
+  flex-shrink: 0;
+}
+.sidebar__logout:hover {
+  color: #fff;
 }
 
 .sidebar__link {
@@ -157,8 +237,22 @@
 .sidebar.is-collapsed .sidebar__label {
   display: none;
 }
+.sidebar.is-collapsed .sidebar__theme {
+  flex-direction: column;
+}
+/* The thumb only tracks the horizontal layout */
+.sidebar.is-collapsed .sidebar__theme-thumb {
+  display: none;
+}
+.sidebar.is-collapsed .sidebar__theme-btn.is-active {
+  background: var(--sidebar-hover);
+}
+.sidebar.is-collapsed .sidebar__logout {
+  justify-content: center;
+  font-size: var(--fs-xs);
+}
 
-/* ---- Mobile: horizontal top bar ---- */
+/* ---- Mobile: horizontal top bar, reusing the sidebar's visual language ---- */
 @media (max-width: 760px) {
   .sidebar,
   .sidebar.is-collapsed {
@@ -167,9 +261,12 @@
     height: auto;
     flex-direction: row;
     align-items: center;
-    gap: var(--sp-3);
-    padding: var(--sp-3) var(--sp-4);
-    border-radius: 0 0 var(--r-xl) var(--r-xl);
+    gap: var(--sp-4);
+    padding: var(--sp-2) var(--sp-4);
+    z-index: 20;
+  }
+  .sidebar.is-collapsed {
+    cursor: default;
   }
   .sidebar__top,
   .sidebar.is-collapsed .sidebar__top {
@@ -180,28 +277,32 @@
   .sidebar__toggle {
     display: none;
   }
-  .sidebar__name {
-    display: inline;
-  }
   .sidebar__nav {
     flex-direction: row;
-    gap: var(--sp-1);
+    align-items: center;
+    gap: var(--sp-3);
     margin-inline: 0;
     margin-inline-start: auto;
     overflow-x: auto;
   }
-  .sidebar__nav-indicator {
-    display: none;
+  .sidebar__group {
+    flex-direction: row;
+    align-items: center;
+  }
+  .sidebar__group--footer {
+    margin-top: 0;
+    padding-inline: 0;
+  }
+  /* Restore the expanded look even if the desktop collapse was left on */
+  .sidebar__name,
+  .sidebar.is-collapsed .sidebar__name,
+  .sidebar__label,
+  .sidebar.is-collapsed .sidebar__label {
+    display: inline;
   }
   .sidebar__link,
   .sidebar.is-collapsed .sidebar__link {
-    padding: 0.5rem;
-    border-radius: var(--r-md);
-  }
-  .sidebar__link.is-active {
-    background: var(--accent);
-  }
-  .sidebar__label {
-    display: none;
+    justify-content: flex-start;
+    padding: 0.625rem var(--sp-4);
   }
 }

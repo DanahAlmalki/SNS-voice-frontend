@@ -57,9 +57,16 @@
 }
 
 /* ---------- Canvas ---------- */
-.cmap__canvas-wrap {
+.cmap__canvas-wrap.panel {
   padding: 0;
   overflow: auto;
+  background-color: #2a2a2e;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.14) 1px,
+    transparent 1px
+  );
+  background-size: 16px 16px;
+  background-attachment: local;
 }
 .cmap__canvas {
   position: relative;
@@ -72,7 +79,7 @@
   text-align: center;
   font-size: var(--fs-xs);
   font-weight: 700;
-  color: var(--text-muted);
+  color: #cbd5e1;
   letter-spacing: 0.01em;
 }
 
@@ -113,14 +120,12 @@
   gap: var(--sp-3);
   padding: 0 var(--sp-4);
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
   transition:
     opacity 0.18s ease,
     box-shadow 0.18s ease,
-    transform 0.12s ease,
-    border-color 0.18s ease;
+    transform 0.12s ease;
   cursor: default;
 }
 .cmap-node:hover {
@@ -150,8 +155,9 @@
   background: #2f7d4f;
 }
 
+/* Color bars encode which column a node belongs to */
 .cmap-node--campaign {
-  border-color: var(--border-strong);
+  border-inline-start: 3px solid var(--vibrant);
 }
 .cmap-node--template {
   border-inline-start: 3px solid var(--accent);

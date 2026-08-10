@@ -39,7 +39,6 @@
 
 .wizard__form {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: clamp(var(--sp-5), 3vw, var(--sp-8));
   box-shadow: var(--shadow-sm);
@@ -51,9 +50,8 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
   list-style: none;
-  padding: 0 0 var(--sp-6);
+  padding: 0 0 var(--sp-5);
   margin: 0 0 var(--sp-6);
-  border-bottom: 1px solid var(--border);
 }
 .steps__item {
   display: flex;
@@ -264,7 +262,6 @@
 
 /* Objection */
 .objection {
-  border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: var(--sp-4);
   margin-bottom: var(--sp-3);
@@ -290,8 +287,6 @@
   justify-content: space-between;
   gap: var(--sp-3);
   margin-top: var(--sp-8);
-  padding-top: var(--sp-5);
-  border-top: 1px solid var(--border);
 }
 
 .btn--test {
@@ -307,7 +302,6 @@
 /* Preview */
 .wizard__preview {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--sp-6);
   height: fit-content;

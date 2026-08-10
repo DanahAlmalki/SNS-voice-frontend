@@ -13,6 +13,10 @@ import {
 import "./DashboardPage.css";
 
 const nf = new Intl.NumberFormat("ar-EG");
+const money = new Intl.NumberFormat("ar-EG", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const dayMonthFmt = new Intl.DateTimeFormat("ar-EG", {
   day: "numeric",
   month: "numeric",
@@ -35,6 +39,11 @@ const OUTCOME_META = [
   { key: "no_answer", label: "بدون رد", cls: "is-warning" },
   { key: "failed", label: "فاشلة", cls: "is-danger" },
 ];
+
+const BALANCE = { amount: 12450.75, currency: "ر.س", minutes: 8320 };
+
+/* Semi-circle arc, left to right over the top (cx 50, cy 50, r 40) */
+const GAUGE_ARC = "M 10 50 A 40 40 0 0 1 90 50";
 
 const PRESETS = [
   { key: "today", label: "اليوم", days: 1 },
@@ -263,16 +272,39 @@ export default function DashboardPage() {
     [current, previous],
   );
 
-  const chart = useMemo(
-    () => buildChart(selectedDays, campaignFilter),
+  const spark = useMemo(
+    () => buildChart(selectedDays, campaignFilter, 24),
     [selectedDays, campaignFilter],
   );
-  const maxChart = Math.max(1, ...chart.map((d) => d.value));
+
+  // Normalise the series into a 0-100 viewBox so the SVG can stretch freely.
+  const sparkPaths = useMemo(() => {
+    const values = spark.map((d) => d.value);
+    const min = Math.min(...values);
+    const span = Math.max(1, Math.max(...values) - min);
+    const stepX = values.length > 1 ? 100 / (values.length - 1) : 0;
+    const points = values.map((v, i) => {
+      const y = 96 - ((v - min) / span) * 88;
+      return `${(i * stepX).toFixed(2)},${y.toFixed(2)}`;
+    });
+    const line = `M ${points.join(" L ")}`;
+    return { line, area: `${line} L 100,100 L 0,100 Z` };
+  }, [spark]);
 
   const totalOutcomes =
     current.outcomes.success +
     current.outcomes.no_answer +
     current.outcomes.failed;
+
+  // Each segment carries the cumulative percentage before it, used as the arc offset.
+  let outcomeOffset = 0;
+  const outcomeSegments = OUTCOME_META.map((o) => {
+    const value = current.outcomes[o.key];
+    const pct = totalOutcomes ? (value / totalOutcomes) * 100 : 0;
+    const segment = { ...o, value, pct, offset: outcomeOffset };
+    outcomeOffset += pct;
+    return segment;
+  });
 
   // Per-campaign comparison across all campaigns in the selected range.
   const campaignStats = useMemo(() => {
@@ -295,6 +327,59 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard">
+      <section className="hero">
+        <div className="hero__aside">
+          <div className="hero__balance">
+            <p className="hero__balance-label">الرصيد المتاح</p>
+            <p className="hero__balance-value">
+              {money.format(BALANCE.amount)}
+              <span className="hero__balance-currency">{BALANCE.currency}</span>
+            </p>
+            <p className="hero__balance-meta">
+              {nf.format(BALANCE.minutes)} دقيقة متبقية
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="hero__cta"
+            onClick={() => navigate("/campaigns/new")}
+          >
+            <Megaphone size={16} />
+            حملة جديدة
+          </button>
+        </div>
+
+        <div className="hero__chart">
+          <div className="hero__chart-head">
+            <h2 className="hero__chart-title">المكالمات خلال الفترة</h2>
+            <span className="hero__chart-total">
+              {nf.format(current.calls)}
+            </span>
+          </div>
+          <svg
+            className="spark"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="مخطط المكالمات خلال الفترة المحددة"
+          >
+            <defs>
+              <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8ea2ff" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#8ea2ff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path className="spark__area" d={sparkPaths.area} />
+            <path className="spark__line" d={sparkPaths.line} />
+          </svg>
+          <div className="hero__chart-axis" dir="ltr">
+            <span>{spark[0]?.label}</span>
+            <span>{spark[spark.length - 1]?.label}</span>
+          </div>
+        </div>
+      </section>
+
       <header className="dashboard__header">
         <div className="dashboard__heading">
           <div className="dashboard__range">
@@ -369,100 +454,82 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-
-        <button
-          className="btn btn--primary"
-          onClick={() => navigate("/campaigns/new")}
-        >
-          <Megaphone size={18} />
-          حملة جديدة
-        </button>
       </header>
 
-      <section className="dashboard__stats">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          const up = s.delta >= 0;
-          return (
-            <article key={s.key} className="panel stat-card">
-              <span className="stat-card__icon">
-                <Icon size={20} />
-              </span>
-              <p className="stat-card__label">{s.label}</p>
-              <p className="stat-card__value">
-                {s.value}
-                {s.suffix && (
-                  <span className="stat-card__suffix">{s.suffix}</span>
-                )}
-              </p>
-              <p
-                className={`stat-card__delta ${up ? "is-up" : "is-down"}`}
-                title="مقارنة بالفترة السابقة"
-              >
-                {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(s.delta).toFixed(1)}%
-              </p>
-            </article>
-          );
-        })}
-      </section>
-
-      <div className="dashboard__grid">
-        <section className="panel dashboard__chart">
-          <div className="dashboard__panel-head">
-            <h2 className="dashboard__panel-title">المكالمات خلال الفترة</h2>
-            <span className="tag tag--muted">{selectedDays.length} يوم</span>
-          </div>
-          <div
-            className="bar-chart"
-            role="img"
-            aria-label="مخطط المكالمات خلال الفترة المحددة"
-          >
-            {chart.map((d, i) => (
-              <div key={`${d.label}-${i}`} className="bar-chart__col">
-                <span className="bar-chart__value">{nf.format(d.value)}</span>
-                <div className="bar-chart__track">
-                  <div
-                    className="bar-chart__fill"
-                    style={{ height: `${(d.value / maxChart) * 100}%` }}
-                  />
-                </div>
-                <span className="bar-chart__label">{d.label}</span>
-              </div>
-            ))}
-          </div>
+      <div className="dashboard__overview">
+        <section className="dashboard__stats">
+          {stats.map((s) => {
+            const Icon = s.icon;
+            const up = s.delta >= 0;
+            return (
+              <article key={s.key} className="panel stat-card">
+                <span className="stat-card__icon">
+                  <Icon size={20} />
+                </span>
+                <p className="stat-card__label">{s.label}</p>
+                <p className="stat-card__value">
+                  {s.value}
+                  {s.suffix && (
+                    <span className="stat-card__suffix">{s.suffix}</span>
+                  )}
+                </p>
+                <p
+                  className={`stat-card__delta ${up ? "is-up" : "is-down"}`}
+                  title="مقارنة بالفترة السابقة"
+                >
+                  {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {Math.abs(s.delta).toFixed(1)}%
+                </p>
+              </article>
+            );
+          })}
         </section>
 
         <section className="panel dashboard__outcomes">
           <div className="dashboard__panel-head">
             <h2 className="dashboard__panel-title">نتائج المكالمات</h2>
           </div>
-          <ul className="outcomes">
-            {OUTCOME_META.map((o) => {
-              const value = current.outcomes[o.key];
-              const pct = totalOutcomes
-                ? Math.round((value / totalOutcomes) * 100)
-                : 0;
-              return (
-                <li key={o.key} className="outcomes__item">
-                  <div className="outcomes__row">
-                    <span className={`outcomes__dot ${o.cls}`} />
-                    <span className="outcomes__label">{o.label}</span>
-                    <span className="outcomes__value">
-                      {nf.format(value)}
-                      <span className="outcomes__pct">{pct}%</span>
-                    </span>
-                  </div>
-                  <div className="outcomes__track">
-                    <div
-                      className={`outcomes__fill ${o.cls}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+          <div className="outcomes">
+            <div className="outcomes__chart">
+              <svg
+                className="gauge"
+                viewBox="0 0 100 56"
+                role="img"
+                aria-label="توزيع نتائج المكالمات"
+              >
+                <path className="gauge__track" d={GAUGE_ARC} pathLength="100" />
+                {outcomeSegments.map((s) => (
+                  <path
+                    key={s.key}
+                    className={`gauge__seg ${s.cls}`}
+                    d={GAUGE_ARC}
+                    pathLength="100"
+                    strokeDasharray={`${s.pct} 100`}
+                    strokeDashoffset={-s.offset}
+                  />
+                ))}
+              </svg>
+              <div className="outcomes__total">
+                <span className="outcomes__total-value">
+                  {nf.format(totalOutcomes)}
+                </span>
+                <span className="outcomes__total-label">إجمالي المكالمات</span>
+              </div>
+            </div>
+
+            <ul className="outcomes__legend">
+              {outcomeSegments.map((s) => (
+                <li key={s.key} className="outcomes__item">
+                  <span className={`outcomes__dot ${s.cls}`} />
+                  <span className="outcomes__label">{s.label}</span>
+                  <span className="outcomes__value">
+                    {nf.format(s.value)}
+                    <span className="outcomes__pct">{Math.round(s.pct)}%</span>
+                  </span>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          </div>
         </section>
       </div>
 

@@ -17,7 +17,6 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -30,7 +29,6 @@
   justify-content: space-between;
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  border-bottom: 1px solid var(--border);
 }
 .call-modal__tabs {
   display: inline-flex;
@@ -224,7 +222,6 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-4) var(--sp-5);
-  border-top: 1px solid var(--border);
   background: var(--bg);
 }
 .call-chat__empty {
@@ -244,13 +241,12 @@
   align-self: flex-start;
   background: var(--accent-weak);
   color: var(--accent-text);
-  border-bottom-inline-start: 2px solid var(--accent);
 }
 .bubble--assistant {
   align-self: flex-end;
   background: var(--surface);
   color: var(--text-secondary);
-  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Footer ---------- */
@@ -260,7 +256,6 @@
   justify-content: space-between;
   gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
-  border-top: 1px solid var(--border);
 }
 .mic-meter {
   display: inline-flex;

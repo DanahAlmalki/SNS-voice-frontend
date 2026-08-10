@@ -1,10 +1,23 @@
 const STORAGE_KEY = "sns-theme";
+const SCHEME_KEY = "sns-color-scheme";
+
+export function loadScheme() {
+  return localStorage.getItem(SCHEME_KEY) === "dark" ? "dark" : "light";
+}
+
+export function saveScheme(scheme) {
+  localStorage.setItem(SCHEME_KEY, scheme);
+}
+
+export function applyScheme(scheme) {
+  document.documentElement.dataset.theme = scheme === "dark" ? "dark" : "light";
+}
 
 export const DEFAULT_THEME = {
   accent: "#575eae",
   vibrant: "#f0562d",
   danger: "#b05650",
-  bg: "#f8fafc",
+  bg: "#eef1f6",
   text: "#0f172a",
   sidebar: "#080b12",
 };
