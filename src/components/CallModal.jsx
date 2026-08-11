@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, PhoneOff, Copy, Check, Mic, Loader2 } from "lucide-react";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
+import { createCampaign } from "../lib/campaigns";
 import "./CallModal.css";
 
 const STATE_LABEL = {
@@ -13,27 +14,32 @@ const STATE_LABEL = {
   interrupted: "تمت المقاطعة",
 };
 
-export default function CallModal({ open, onClose, prompt }) {
+export default function CallModal({ open, onClose, prompt, name, config }) {
   const [tab, setTab] = useState("call");
   const [copied, setCopied] = useState(false);
+  const [setupError, setSetupError] = useState(null);
   const { start, stop, connected, state, messages, vadProb, error } =
     useVoiceAgent();
   const started = useRef(false);
   const chatEndRef = useRef(null);
 
-  // Start the call when the modal opens; tear it down when it closes.
+  // Register the prompt as a campaign, then open the socket bound to its id.
   useEffect(() => {
     if (open && !started.current) {
       started.current = true;
-      start().catch(() => {});
+      setSetupError(null);
+      createCampaign({ name, prompt, config })
+        .then((campaignId) => start(campaignId))
+        .catch((err) => setSetupError(err.message || "تعذّر بدء المكالمة"));
     }
     if (!open && started.current) {
       started.current = false;
       stop();
       setTab("call");
       setCopied(false);
+      setSetupError(null);
     }
-  }, [open, start, stop]);
+  }, [open, start, stop, prompt, name, config]);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && open && handleEnd();
@@ -122,16 +128,18 @@ export default function CallModal({ open, onClose, prompt }) {
                 </span>
               </div>
               <p className="call-status">
-                {error
-                  ? error
-                  : connected
-                    ? STATE_LABEL[state] ?? state
-                    : "جارٍ الاتصال…"}
+                {setupError
+                  ? setupError
+                  : error
+                    ? error
+                    : connected
+                      ? (STATE_LABEL[state] ?? state)
+                      : "جارٍ الاتصال…"}
               </p>
             </div>
 
             <div className="call-chat">
-              {messages.length === 0 && !error && (
+              {messages.length === 0 && !error && !setupError && (
                 <p className="muted call-chat__empty">
                   ابدأ بالتحدث وسيظهر الحوار هنا.
                 </p>

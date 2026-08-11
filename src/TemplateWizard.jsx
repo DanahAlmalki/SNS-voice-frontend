@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Volume2,
   Play,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
+import { buildConfig } from "./lib/buildConfig";
 import "./TemplateWizard.css";
 
 const STEPS = [
@@ -24,6 +25,7 @@ const STEPS = [
   { id: "script", label: "النص والنقاط" },
   { id: "objections", label: "الردود على الاعتراضات" },
   { id: "fallback", label: "الحالات الاحتياطية والامتثال" },
+  { id: "advanced", label: "إعدادات متقدمة (اختياري)" },
 ];
 
 const PERSONALITIES = [
@@ -98,6 +100,26 @@ const initialData = {
   transferNumber: "",
   optOut: "",
   maxDuration: 5,
+  greetingEnabled: true,
+  // Blank = keep the backend default (shown as the input placeholder).
+  temperature: "",
+  topP: "",
+  seed: "",
+  maxTokens: "",
+  ttsNumStep: "",
+  ttsGuidanceScale: "",
+  ttsDuration: "",
+  ttsSeed: "",
+  ttsAddShadda: true,
+  vadThreshold: "",
+  minSilenceDurationMs: "",
+  bargeInThreshold: "",
+  bargeInMinDurationMs: "",
+  sttBeamSize: "",
+  sttBestOf: "",
+  sttHallucinationSilenceSec: "",
+  sttConditionOnPrevious: false,
+  sttInitialPrompt: "",
 };
 
 export default function TemplateWizard() {
@@ -106,6 +128,7 @@ export default function TemplateWizard() {
   const [showCall, setShowCall] = useState(false);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
+  const config = useMemo(() => buildConfig(data), [data]);
 
   const chooseObjective = (id) => {
     const starter = STARTER_SCRIPTS[id] || {};
@@ -152,6 +175,7 @@ export default function TemplateWizard() {
             {step === 3 && <ScriptStep data={data} set={set} />}
             {step === 4 && <ObjectionsStep data={data} set={set} />}
             {step === 5 && <FallbackStep data={data} set={set} />}
+            {step === 6 && <AdvancedStep data={data} set={set} />}
           </div>
 
           <div className="wizard__nav">
@@ -171,7 +195,7 @@ export default function TemplateWizard() {
             ) : (
               <button
                 className="btn btn--primary"
-                onClick={() => console.log("SAVE TEMPLATE", data)}
+                onClick={() => console.log("SAVE TEMPLATE", { data, config })}
               >
                 <Check size={18} />
                 حفظ القالب
@@ -195,6 +219,8 @@ export default function TemplateWizard() {
         open={showCall}
         onClose={() => setShowCall(false)}
         prompt={buildPrompt(data)}
+        name={data.name}
+        config={config}
       />
     </div>
   );
@@ -510,6 +536,176 @@ function FallbackStep({ data, set }) {
           max={30}
           value={data.maxDuration}
           onChange={(e) => set({ maxDuration: Number(e.target.value) })}
+        />
+      </Field>
+    </section>
+  );
+}
+
+function NumberField({ label, value, onChange, placeholder, step }) {
+  return (
+    <Field label={label}>
+      <input
+        type="number"
+        step={step}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </Field>
+  );
+}
+
+function AdvancedStep({ data, set }) {
+  return (
+    <section className="adv-step">
+      <h2>إعدادات متقدمة</h2>
+      <p className="muted">
+        اختياري — اترك الحقل فارغاً لاستخدام القيمة الافتراضية.
+      </p>
+
+      <h3 className="adv-group">Language model</h3>
+      <div className="adv-grid">
+        <NumberField
+          label="Temperature"
+          value={data.temperature}
+          step="0.1"
+          placeholder="0.2"
+          onChange={(v) => set({ temperature: v })}
+        />
+        <NumberField
+          label="Top-P"
+          value={data.topP}
+          step="0.05"
+          placeholder="0.9"
+          onChange={(v) => set({ topP: v })}
+        />
+        <NumberField
+          label="Seed"
+          value={data.seed}
+          step="1"
+          placeholder="42"
+          onChange={(v) => set({ seed: v })}
+        />
+        <NumberField
+          label="Max tokens"
+          value={data.maxTokens}
+          step="1"
+          placeholder="500"
+          onChange={(v) => set({ maxTokens: v })}
+        />
+      </div>
+
+      <h3 className="adv-group">Voice quality</h3>
+      <div className="adv-grid">
+        <NumberField
+          label="Generation steps"
+          value={data.ttsNumStep}
+          step="1"
+          placeholder="32"
+          onChange={(v) => set({ ttsNumStep: v })}
+        />
+        <NumberField
+          label="Guidance scale"
+          value={data.ttsGuidanceScale}
+          step="0.1"
+          placeholder="1.5"
+          onChange={(v) => set({ ttsGuidanceScale: v })}
+        />
+        <NumberField
+          label="Duration (seconds, 0 = auto)"
+          value={data.ttsDuration}
+          step="0.5"
+          placeholder="0"
+          onChange={(v) => set({ ttsDuration: v })}
+        />
+        <NumberField
+          label="Voice seed"
+          value={data.ttsSeed}
+          step="1"
+          placeholder="42"
+          onChange={(v) => set({ ttsSeed: v })}
+        />
+      </div>
+      <label className="switch">
+        <input
+          type="checkbox"
+          checked={data.ttsAddShadda}
+          onChange={(e) => set({ ttsAddShadda: e.target.checked })}
+        />
+        <span>Add shadda automatically</span>
+      </label>
+
+      <h3 className="adv-group">Speech detection &amp; barge-in</h3>
+      <div className="adv-grid">
+        <NumberField
+          label="Detection sensitivity"
+          value={data.vadThreshold}
+          step="0.01"
+          placeholder="0.85"
+          onChange={(v) => set({ vadThreshold: v })}
+        />
+        <NumberField
+          label="Silence duration (ms)"
+          value={data.minSilenceDurationMs}
+          step="50"
+          placeholder="1200"
+          onChange={(v) => set({ minSilenceDurationMs: v })}
+        />
+        <NumberField
+          label="Barge-in threshold"
+          value={data.bargeInThreshold}
+          step="0.01"
+          placeholder="0.92"
+          onChange={(v) => set({ bargeInThreshold: v })}
+        />
+        <NumberField
+          label="Min barge-in duration (ms)"
+          value={data.bargeInMinDurationMs}
+          step="50"
+          placeholder="450"
+          onChange={(v) => set({ bargeInMinDurationMs: v })}
+        />
+      </div>
+
+      <h3 className="adv-group">Speech to text</h3>
+      <div className="adv-grid">
+        <NumberField
+          label="Beam size"
+          value={data.sttBeamSize}
+          step="1"
+          placeholder="5"
+          onChange={(v) => set({ sttBeamSize: v })}
+        />
+        <NumberField
+          label="Best of"
+          value={data.sttBestOf}
+          step="1"
+          placeholder="1"
+          onChange={(v) => set({ sttBestOf: v })}
+        />
+        <NumberField
+          label="Hallucination silence (seconds)"
+          value={data.sttHallucinationSilenceSec}
+          step="0.5"
+          placeholder="2.0"
+          onChange={(v) => set({ sttHallucinationSilenceSec: v })}
+        />
+      </div>
+      <label className="switch">
+        <input
+          type="checkbox"
+          checked={data.sttConditionOnPrevious}
+          onChange={(e) => set({ sttConditionOnPrevious: e.target.checked })}
+        />
+        <span>Condition on previous text</span>
+      </label>
+      <Field label="Initial speech-recognition prompt">
+        <textarea
+          rows={2}
+          value={data.sttInitialPrompt}
+          placeholder="مثال: إي نعم، صح، نفس العنوان ما تغيّر..."
+          onChange={(e) => set({ sttInitialPrompt: e.target.value })}
         />
       </Field>
     </section>

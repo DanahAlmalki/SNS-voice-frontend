@@ -126,6 +126,34 @@
   font-size: var(--fs-xs);
 }
 
+/* Advanced settings */
+.adv-group {
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+/* Field labels stay in English inside the RTL wizard */
+.adv-step .adv-group,
+.adv-step .field__label,
+.adv-step .switch span {
+  direction: ltr;
+  text-align: right;
+}
+.adv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3) var(--sp-4);
+}
+.adv-grid .field {
+  margin-bottom: 0;
+}
+@media (max-width: 720px) {
+  .adv-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Cards */
 .cards {
   display: grid;

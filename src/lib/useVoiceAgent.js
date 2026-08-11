@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const WS_URL =
+  import.meta.env.VITE_VOICE_WS_URL ??
   "wss://voice-containerapp.jollygrass-66012e86.westus3.azurecontainerapps.io/ws";
 const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 512;
@@ -88,6 +89,9 @@ export function useVoiceAgent() {
           if (!playingRef.current) playNext();
           break;
         }
+        case "campaign_bound":
+          if (!data.ok) setError("تعذّر ربط مطالبة الحملة بالمكالمة");
+          break;
         case "error":
           setError(data.message || "حدث خطأ في الاتصال");
           break;
@@ -123,56 +127,79 @@ export function useVoiceAgent() {
     setVadProb(0);
   }, [stopAudio]);
 
-  const start = useCallback(async () => {
-    setError(null);
-    setMessages([]);
-    try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({
-        audio: {
+  // Switches the active prompt on an already-open socket.
+  const setCampaign = useCallback((campaignId) => {
+    const ws = wsRef.current;
+    if (!campaignId || ws?.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({ type: "set_campaign", campaign_id: campaignId }));
+  }, []);
+
+  // `campaignId` binds the stored prompt before the greeting is generated.
+  const start = useCallback(
+    async (campaignId) => {
+      setError(null);
+      setMessages([]);
+      try {
+        streamRef.current = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            sampleRate: SAMPLE_RATE,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
+        const ctx = new (window.AudioContext || window.webkitAudioContext)({
           sampleRate: SAMPLE_RATE,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+        });
+        await ctx.resume(); // unlock playback inside the click gesture
+        ctxRef.current = ctx;
 
-      const ctx = new (window.AudioContext || window.webkitAudioContext)({
-        sampleRate: SAMPLE_RATE,
-      });
-      await ctx.resume(); // unlock playback inside the click gesture
-      ctxRef.current = ctx;
-
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-      ws.onmessage = handleMessage;
-      ws.onerror = () => setError("تعذّر الاتصال بالخادم");
-      ws.onclose = () => setConnected(false);
-      ws.onopen = () => {
-        const source = ctx.createMediaStreamSource(streamRef.current);
-        const proc = ctx.createScriptProcessor(CHUNK_SIZE, 1, 1);
-        sourceRef.current = source;
-        procRef.current = proc;
-        proc.onaudioprocess = (e) => {
-          if (ws.readyState !== WebSocket.OPEN) return;
-          const input = e.inputBuffer.getChannelData(0);
-          ws.send(new Float32Array(input).buffer);
+        const url = campaignId
+          ? `${WS_URL}?campaign_id=${encodeURIComponent(campaignId)}`
+          : WS_URL;
+        const ws = new WebSocket(url);
+        wsRef.current = ws;
+        ws.onmessage = handleMessage;
+        ws.onerror = () => setError("تعذّر الاتصال بالخادم");
+        ws.onclose = () => setConnected(false);
+        ws.onopen = () => {
+          const source = ctx.createMediaStreamSource(streamRef.current);
+          const proc = ctx.createScriptProcessor(CHUNK_SIZE, 1, 1);
+          sourceRef.current = source;
+          procRef.current = proc;
+          proc.onaudioprocess = (e) => {
+            if (ws.readyState !== WebSocket.OPEN) return;
+            const input = e.inputBuffer.getChannelData(0);
+            ws.send(new Float32Array(input).buffer);
+          };
+          source.connect(proc);
+          proc.connect(ctx.destination);
         };
-        source.connect(proc);
-        proc.connect(ctx.destination);
-      };
-    } catch (err) {
-      setError(
-        err?.name === "NotAllowedError"
-          ? "تم رفض إذن الميكروفون"
-          : "تعذّر بدء المكالمة",
-      );
-      stop();
-      throw err;
-    }
-  }, [handleMessage, stop]);
+      } catch (err) {
+        setError(
+          err?.name === "NotAllowedError"
+            ? "تم رفض إذن الميكروفون"
+            : "تعذّر بدء المكالمة",
+        );
+        stop();
+        throw err;
+      }
+    },
+    [handleMessage, stop],
+  );
 
   useEffect(() => () => stop(), [stop]);
 
-  return { start, stop, connected, state, messages, vadProb, error };
+  return {
+    start,
+    stop,
+    setCampaign,
+    connected,
+    state,
+    messages,
+    vadProb,
+    error,
+  };
 }
