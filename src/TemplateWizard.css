@@ -255,6 +255,11 @@
   color: var(--accent-text);
   font-weight: 700;
 }
+.voice-chip small {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-weight: 400;
+  font-size: 0.8em;
+}
 .segmented {
   display: inline-flex;
   gap: var(--sp-2);

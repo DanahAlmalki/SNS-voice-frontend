@@ -23,7 +23,7 @@ const NAV_ITEMS = [
   { to: "/templates", label: "القوالب", icon: LayoutTemplate },
   { to: "/campaigns", label: "الحملات", icon: Megaphone },
   { to: "/campaign-map", label: "خريطة الحملات", icon: Waypoints },
-  { to: "/records", label: "السجلات", icon: ClipboardList },
+  //{ to: "/records", label: "السجلات", icon: ClipboardList },
 ];
 
 const SUPPORT_ITEMS = [
@@ -122,6 +122,10 @@ export default function Sidebar() {
           </Link>
         </div>
       </nav>
+
+      <p className="sidebar__version" dir="ltr">
+        <span className="sidebar__label">Version </span>2.0.0
+      </p>
 
       <button
         className="sidebar__toggle"

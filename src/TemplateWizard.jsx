@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
-import { buildConfig } from "./lib/buildConfig";
+import { buildOverrides, VOICE_PRESETS } from "./lib/buildOverrides";
 import "./TemplateWizard.css";
 
 const STEPS = [
@@ -43,37 +43,38 @@ const OBJECTIVES = [
   { id: "offer", title: "الترويج لعرض", icon: Gift },
 ];
 
-const TOKENS = ["{الاسم_الأول}", "{اسم_العائلة}", "{الشركة}", "{المدينة}"];
+// The greeting is spoken verbatim and the backend only substitutes {staff_name}.
+const GREETING_TOKENS = ["{staff_name}"];
 
 const STARTER_SCRIPTS = {
   appointment: {
-    opening: "مرحباً {الاسم_الأول}، أنا أليكس من شركة أكمي.",
+    opening: "مرحباً، معك {staff_name} من شركة أكمي.",
     purpose: "أتصل بك لتحديد موعد يناسبك لعرض خدماتنا.",
     points:
       "• شرح مختصر للخدمة\n• توضيح الفائدة الرئيسية\n• اقتراح موعدين محتملين",
     cta: "هل يناسبك يوم الثلاثاء أم الأربعاء؟",
   },
   qualify: {
-    opening: "مرحباً {الاسم_الأول}، معك أليكس من أكمي.",
+    opening: "مرحباً، معك {staff_name} من أكمي.",
     purpose: "أود طرح بعض الأسئلة السريعة لأرى كيف يمكننا مساعدتك.",
     points:
       "• سؤال عن الحاجة الحالية\n• سؤال عن الميزانية\n• سؤال عن الجدول الزمني",
     cta: "هل يمكنني ترتيب اتصال مع أحد مختصينا؟",
   },
   followup: {
-    opening: "مرحباً {الاسم_الأول}، أتواصل معك متابعةً لطلبك السابق.",
+    opening: "مرحباً، معك {staff_name}، أتواصل معك متابعةً لطلبك السابق.",
     purpose: "أردت التأكد من أن كل شيء على ما يرام.",
     points: "• تذكير بالطلب السابق\n• السؤال عن أي استفسارات",
     cta: "هل هناك ما يمكنني مساعدتك به اليوم؟",
   },
   survey: {
-    opening: "مرحباً {الاسم_الأول}، أنا أليكس من أكمي.",
+    opening: "مرحباً، معك {staff_name} من أكمي.",
     purpose: "لدينا استبيان قصير لتحسين خدماتنا، يستغرق دقيقة واحدة.",
     points: "• سؤال عن مستوى الرضا\n• سؤال عن اقتراحات التحسين",
     cta: "هل تمانع الإجابة على سؤالين سريعين؟",
   },
   offer: {
-    opening: "مرحباً {الاسم_الأول}، أنا أليكس من أكمي.",
+    opening: "مرحباً، معك {staff_name} من أكمي.",
     purpose: "لدينا عرض خاص أعتقد أنه سيثير اهتمامك.",
     points: "• تفاصيل العرض\n• مدة العرض\n• الفائدة للعميل",
     cta: "هل ترغب بالاستفادة من العرض الآن؟",
@@ -100,24 +101,17 @@ const initialData = {
   transferNumber: "",
   optOut: "",
   maxDuration: 5,
-  greetingEnabled: true,
   // Blank = keep the backend default (shown as the input placeholder).
   temperature: "",
-  topP: "",
   seed: "",
   maxTokens: "",
   ttsNumStep: "",
   ttsGuidanceScale: "",
-  ttsDuration: "",
-  ttsSeed: "",
   ttsAddShadda: true,
   vadThreshold: "",
   minSilenceDurationMs: "",
-  bargeInThreshold: "",
   bargeInMinDurationMs: "",
   sttBeamSize: "",
-  sttBestOf: "",
-  sttHallucinationSilenceSec: "",
   sttConditionOnPrevious: false,
   sttInitialPrompt: "",
 };
@@ -128,7 +122,7 @@ export default function TemplateWizard() {
   const [showCall, setShowCall] = useState(false);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
-  const config = useMemo(() => buildConfig(data), [data]);
+  const overrides = useMemo(() => buildOverrides(data), [data]);
 
   const chooseObjective = (id) => {
     const starter = STARTER_SCRIPTS[id] || {};
@@ -219,8 +213,9 @@ export default function TemplateWizard() {
         open={showCall}
         onClose={() => setShowCall(false)}
         prompt={buildPrompt(data)}
+        greeting={data.opening}
         name={data.name}
-        config={config}
+        overrides={overrides}
       />
     </div>
   );
@@ -284,14 +279,15 @@ function VoiceStep({ data, set }) {
       <h2>الصوت والشخصية</h2>
       <Field label="اختيار الصوت">
         <div className="voice-list">
-          {["صوت رجالي", "صوت نسائي", "صوت محايد"].map((v) => (
+          {VOICE_PRESETS.map((v) => (
             <button
-              key={v}
-              className={`voice-chip ${data.voice === v ? "is-selected" : ""}`}
-              onClick={() => set({ voice: v })}
+              key={v.id}
+              className={`voice-chip ${data.voice === v.id ? "is-selected" : ""}`}
+              onClick={() => set({ voice: v.id })}
             >
               <Volume2 size={16} />
-              {v}
+              {v.label}
+              <small>{v.hint}</small>
             </button>
           ))}
         </div>
@@ -361,11 +357,11 @@ function ObjectiveStep({ data, choose }) {
   );
 }
 
-function TokenBar({ onInsert }) {
+function TokenBar({ onInsert, tokens }) {
   return (
     <div className="tokens">
       <span className="tokens__label">إدراج حقل:</span>
-      {TOKENS.map((t) => (
+      {tokens.map((t) => (
         <button key={t} className="token" onClick={() => onInsert(t)}>
           {t}
         </button>
@@ -382,8 +378,11 @@ function ScriptStep({ data, set }) {
     <section>
       <h2>النص والنقاط الرئيسية</h2>
 
-      <Field label="الافتتاحية">
-        <TokenBar onInsert={append("opening")} />
+      <Field
+        label="الافتتاحية"
+        hint="تُنطق كما هي في بداية المكالمة — {staff_name} يُستبدل باسم الصوت المختار."
+      >
+        <TokenBar tokens={GREETING_TOKENS} onInsert={append("opening")} />
         <textarea
           value={data.opening}
           onChange={(e) => set({ opening: e.target.value })}
@@ -542,12 +541,14 @@ function FallbackStep({ data, set }) {
   );
 }
 
-function NumberField({ label, value, onChange, placeholder, step }) {
+function NumberField({ label, value, onChange, placeholder, step, min, max }) {
   return (
     <Field label={label}>
       <input
         type="number"
         step={step}
+        min={min}
+        max={max}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
@@ -570,15 +571,9 @@ function AdvancedStep({ data, set }) {
           label="Temperature"
           value={data.temperature}
           step="0.1"
+          min="0"
           placeholder="0.2"
           onChange={(v) => set({ temperature: v })}
-        />
-        <NumberField
-          label="Top-P"
-          value={data.topP}
-          step="0.05"
-          placeholder="0.9"
-          onChange={(v) => set({ topP: v })}
         />
         <NumberField
           label="Seed"
@@ -591,6 +586,7 @@ function AdvancedStep({ data, set }) {
           label="Max tokens"
           value={data.maxTokens}
           step="1"
+          min="1"
           placeholder="500"
           onChange={(v) => set({ maxTokens: v })}
         />
@@ -602,6 +598,7 @@ function AdvancedStep({ data, set }) {
           label="Generation steps"
           value={data.ttsNumStep}
           step="1"
+          min="1"
           placeholder="32"
           onChange={(v) => set({ ttsNumStep: v })}
         />
@@ -609,22 +606,9 @@ function AdvancedStep({ data, set }) {
           label="Guidance scale"
           value={data.ttsGuidanceScale}
           step="0.1"
+          min="0.1"
           placeholder="1.5"
           onChange={(v) => set({ ttsGuidanceScale: v })}
-        />
-        <NumberField
-          label="Duration (seconds, 0 = auto)"
-          value={data.ttsDuration}
-          step="0.5"
-          placeholder="0"
-          onChange={(v) => set({ ttsDuration: v })}
-        />
-        <NumberField
-          label="Voice seed"
-          value={data.ttsSeed}
-          step="1"
-          placeholder="42"
-          onChange={(v) => set({ ttsSeed: v })}
         />
       </div>
       <label className="switch">
@@ -642,6 +626,8 @@ function AdvancedStep({ data, set }) {
           label="Detection sensitivity"
           value={data.vadThreshold}
           step="0.01"
+          min="0"
+          max="1"
           placeholder="0.85"
           onChange={(v) => set({ vadThreshold: v })}
         />
@@ -649,20 +635,15 @@ function AdvancedStep({ data, set }) {
           label="Silence duration (ms)"
           value={data.minSilenceDurationMs}
           step="50"
+          min="0"
           placeholder="1200"
           onChange={(v) => set({ minSilenceDurationMs: v })}
-        />
-        <NumberField
-          label="Barge-in threshold"
-          value={data.bargeInThreshold}
-          step="0.01"
-          placeholder="0.92"
-          onChange={(v) => set({ bargeInThreshold: v })}
         />
         <NumberField
           label="Min barge-in duration (ms)"
           value={data.bargeInMinDurationMs}
           step="50"
+          min="0"
           placeholder="450"
           onChange={(v) => set({ bargeInMinDurationMs: v })}
         />
@@ -674,22 +655,9 @@ function AdvancedStep({ data, set }) {
           label="Beam size"
           value={data.sttBeamSize}
           step="1"
+          min="1"
           placeholder="5"
           onChange={(v) => set({ sttBeamSize: v })}
-        />
-        <NumberField
-          label="Best of"
-          value={data.sttBestOf}
-          step="1"
-          placeholder="1"
-          onChange={(v) => set({ sttBestOf: v })}
-        />
-        <NumberField
-          label="Hallucination silence (seconds)"
-          value={data.sttHallucinationSilenceSec}
-          step="0.5"
-          placeholder="2.0"
-          onChange={(v) => set({ sttHallucinationSilenceSec: v })}
         />
       </div>
       <label className="switch">

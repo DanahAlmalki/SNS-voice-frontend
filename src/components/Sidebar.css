@@ -106,6 +106,16 @@
   padding-inline: var(--sp-4);
 }
 
+/* Cancels the sidebar's column gap so it sits close to the footer group */
+.sidebar__version {
+  margin: calc(var(--sp-6) * -1) 0 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--sidebar-fg);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
 .sidebar__theme {
   position: relative;
   display: flex;
@@ -275,6 +285,9 @@
     gap: 0;
   }
   .sidebar__toggle {
+    display: none;
+  }
+  .sidebar__version {
     display: none;
   }
   .sidebar__nav {

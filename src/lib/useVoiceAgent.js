@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const WS_URL =
   import.meta.env.VITE_VOICE_WS_URL ??
   "wss://voice-containerapp.jollygrass-66012e86.westus3.azurecontainerapps.io/ws";
+// Uplink format the pipecat serializer expects: float32 PCM, mono.
 const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 512;
 
@@ -19,6 +20,7 @@ export function useVoiceAgent() {
   const srcRef = useRef(null);
 
   const [connected, setConnected] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const [state, setState] = useState("idle");
   const [messages, setMessages] = useState([]);
   const [vadProb, setVadProb] = useState(0);
@@ -62,6 +64,7 @@ export function useVoiceAgent() {
       switch (data.type) {
         case "connected":
           setConnected(true);
+          setSessionId(data.session_id ?? null);
           break;
         case "vad_status":
           setVadProb(data.speech_prob ?? 0);
@@ -123,18 +126,20 @@ export function useVoiceAgent() {
     streamRef.current = null;
     wsRef.current = null;
     setConnected(false);
+    setSessionId(null);
     setState("idle");
     setVadProb(0);
   }, [stopAudio]);
 
-  // Switches the active prompt on an already-open socket.
+  // Mid-call this swaps the prompt only — the stored overrides do not re-apply.
   const setCampaign = useCallback((campaignId) => {
     const ws = wsRef.current;
     if (!campaignId || ws?.readyState !== WebSocket.OPEN) return;
     ws.send(JSON.stringify({ type: "set_campaign", campaign_id: campaignId }));
   }, []);
 
-  // `campaignId` binds the stored prompt before the greeting is generated.
+  // Overrides (voice, VAD, barge-in) only bind when the socket opens with
+  // ?campaign_id= — the pipeline is built once, before the greeting.
   const start = useCallback(
     async (campaignId) => {
       setError(null);
@@ -156,10 +161,10 @@ export function useVoiceAgent() {
         await ctx.resume(); // unlock playback inside the click gesture
         ctxRef.current = ctx;
 
-        const url = campaignId
-          ? `${WS_URL}?campaign_id=${encodeURIComponent(campaignId)}`
-          : WS_URL;
-        const ws = new WebSocket(url);
+        const query = new URLSearchParams();
+        if (campaignId) query.set("campaign_id", campaignId);
+        const qs = query.toString();
+        const ws = new WebSocket(qs ? `${WS_URL}?${qs}` : WS_URL);
         wsRef.current = ws;
         ws.onmessage = handleMessage;
         ws.onerror = () => setError("تعذّر الاتصال بالخادم");
@@ -197,6 +202,7 @@ export function useVoiceAgent() {
     stop,
     setCampaign,
     connected,
+    sessionId,
     state,
     messages,
     vadProb,

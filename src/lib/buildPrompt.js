@@ -23,6 +23,14 @@ const SPEED_LABEL = {
   fast: "سريع",
 };
 
+const VOICE_LABEL = {
+  salwa: "سلوى (صوت نسائي)",
+  silma: "سلمى (صوت نسائي)",
+  fahad: "فهد (صوت رجالي)",
+  sultan: "سلطان (صوت رجالي)",
+  salim: "سليم (صوت رجالي)",
+};
+
 const LANGUAGE_LABEL = {
   ar: "العربية",
   en: "الإنجليزية",
@@ -48,7 +56,7 @@ function buildRoleSection(data) {
     data.personality && PERSONALITY_LABEL[data.personality]
       ? `- Persona / personality: ${PERSONALITY_LABEL[data.personality]}`
       : null,
-    line("Voice", data.voice),
+    line("Voice", VOICE_LABEL[data.voice]),
     data.speed && SPEED_LABEL[data.speed]
       ? `- Speaking speed: ${SPEED_LABEL[data.speed]}`
       : null,
@@ -65,9 +73,9 @@ function buildMissionSection(data) {
     : null;
 }
 
+// The opening line is sent as the campaign `greeting`, so it stays out of the prompt.
 function buildScriptSection(data) {
   return section("CALL SCRIPT", [
-    line("Opening line", data.opening),
     line("Reason for the call", data.purpose),
     line("Key talking points", data.points),
     line("Call to action", data.cta),

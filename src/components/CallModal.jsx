@@ -14,7 +14,14 @@ const STATE_LABEL = {
   interrupted: "تمت المقاطعة",
 };
 
-export default function CallModal({ open, onClose, prompt, name, config }) {
+export default function CallModal({
+  open,
+  onClose,
+  prompt,
+  greeting,
+  name,
+  overrides,
+}) {
   const [tab, setTab] = useState("call");
   const [copied, setCopied] = useState(false);
   const [setupError, setSetupError] = useState(null);
@@ -23,12 +30,13 @@ export default function CallModal({ open, onClose, prompt, name, config }) {
   const started = useRef(false);
   const chatEndRef = useRef(null);
 
-  // Register the prompt as a campaign, then open the socket bound to its id.
+  // Register the prompt + overrides as a campaign, then open the socket bound
+  // to its id — the overrides only apply at pipeline build time.
   useEffect(() => {
     if (open && !started.current) {
       started.current = true;
       setSetupError(null);
-      createCampaign({ name, prompt, config })
+      createCampaign({ name, prompt, greeting, overrides })
         .then((campaignId) => start(campaignId))
         .catch((err) => setSetupError(err.message || "تعذّر بدء المكالمة"));
     }
@@ -39,7 +47,7 @@ export default function CallModal({ open, onClose, prompt, name, config }) {
       setCopied(false);
       setSetupError(null);
     }
-  }, [open, start, stop, prompt, name, config]);
+  }, [open, start, stop, prompt, greeting, name, overrides]);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && open && handleEnd();
