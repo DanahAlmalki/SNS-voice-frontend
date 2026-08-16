@@ -8,7 +8,7 @@ export const VOICE_PRESETS = [
   { id: "silma", label: "سلمى", hint: "نسائي" },
   { id: "fahad", label: "فهد", hint: "رجالي" },
   { id: "sultan", label: "سلطان", hint: "رجالي" },
-  { id: "salim", label: "سليم", hint: "رجالي" },
+  { id: "salim", label: "سالم", hint: "رجالي" },
 ];
 
 const SPEED_MAP = { slow: 0.85, normal: 1.0, fast: 1.15 };

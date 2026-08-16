@@ -28,7 +28,7 @@ const VOICE_LABEL = {
   silma: "سلمى (صوت نسائي)",
   fahad: "فهد (صوت رجالي)",
   sultan: "سلطان (صوت رجالي)",
-  salim: "سليم (صوت رجالي)",
+  salim: "سالم (صوت رجالي)",
 };
 
 const LANGUAGE_LABEL = {
