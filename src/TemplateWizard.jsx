@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Volume2,
   Play,
@@ -8,16 +8,12 @@ import {
   Check,
   ArrowLeft,
   ArrowRight,
-  CalendarCheck,
-  Target,
-  Bell,
-  ClipboardList,
-  Gift,
 } from "lucide-react";
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
 import { buildOverrides, VOICE_PRESETS } from "./lib/buildOverrides";
-import { saveTemplate } from "./lib/templates";
+import { initialData, findTemplate, upsertTemplate } from "./lib/templates";
+import { OBJECTIVES } from "./lib/objectives";
 import "./TemplateWizard.css";
 
 const STEPS = [
@@ -35,14 +31,6 @@ const PERSONALITIES = [
   { id: "professional", title: "احترافي", desc: "رسمي ومصقول كرجل أعمال" },
   { id: "enthusiastic", title: "متحمّس", desc: "نشيط ومفعم بالحيوية" },
   { id: "consultative", title: "استشاري", desc: "هادئ وصبور ومقنع" },
-];
-
-const OBJECTIVES = [
-  { id: "appointment", title: "حجز موعد", icon: CalendarCheck },
-  { id: "qualify", title: "تأهيل عميل محتمل", icon: Target },
-  { id: "followup", title: "متابعة أو تذكير", icon: Bell },
-  { id: "survey", title: "استبيان أو تقييم", icon: ClipboardList },
-  { id: "offer", title: "الترويج لعرض", icon: Gift },
 ];
 
 // The greeting is spoken verbatim and the backend only substitutes {staff_name}.
@@ -83,45 +71,14 @@ const STARTER_SCRIPTS = {
   },
 };
 
-const initialData = {
-  name: "",
-  language: "ar",
-  brand: "",
-  product: "",
-  voice: "",
-  speed: "normal",
-  personality: "friendly",
-  objective: "",
-  opening: "",
-  purpose: "",
-  points: "",
-  cta: "",
-  objections: [{ trigger: "", response: "" }],
-  voicemail: "hangup",
-  voicemailText: "",
-  transfer: false,
-  transferNumber: "",
-  optOut: "",
-  maxDuration: 5,
-  // Blank = keep the backend default (shown as the input placeholder).
-  temperature: "",
-  seed: "",
-  maxTokens: "",
-  ttsNumStep: "",
-  ttsGuidanceScale: "",
-  ttsAddShadda: true,
-  vadThreshold: "",
-  minSilenceDurationMs: "",
-  bargeInMinDurationMs: "",
-  sttBeamSize: "",
-  sttConditionOnPrevious: false,
-  sttInitialPrompt: "",
-};
-
 export default function TemplateWizard() {
   const navigate = useNavigate();
+  const { id: templateId } = useParams();
   const [step, setStep] = useState(0);
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => {
+    const existing = templateId ? findTemplate(templateId) : null;
+    return existing ? { ...initialData, ...existing.data } : initialData;
+  });
   const [showCall, setShowCall] = useState(false);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
@@ -136,24 +93,16 @@ export default function TemplateWizard() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const finish = () => {
-    const voicePreset = VOICE_PRESETS.find((v) => v.id === data.voice);
-    const objectiveLabel =
-      OBJECTIVES.find((o) => o.id === data.objective)?.title || "بدون هدف";
-    saveTemplate({
-      id: Date.now(),
-      name: data.name || "قالب بدون اسم",
-      description: data.purpose || data.opening || "",
-      objective: objectiveLabel,
-      voice: voicePreset ? `صوت ${voicePreset.hint}` : "غير محدد",
-      updated: "الآن",
-    });
+    upsertTemplate({ id: templateId ?? Date.now(), updated: "الآن", data });
     navigate("/templates");
   };
 
   return (
     <div className="wizard-page" dir="rtl">
       <header className="page-head">
-        <h1 className="page-head__title">إنشاء قالب مكالمة</h1>
+        <h1 className="page-head__title">
+          {templateId ? "تعديل القالب" : "إنشاء قالب مكالمة"}
+        </h1>
         <p className="page-head__sub">
           صمّم شخصية الوكيل ونص المكالمة الصادرة خطوة بخطوة.
         </p>
@@ -207,7 +156,7 @@ export default function TemplateWizard() {
             ) : (
               <button className="btn btn--primary" onClick={finish}>
                 <Check size={18} />
-                حفظ القالب
+                {templateId ? "حفظ التعديلات" : "حفظ القالب"}
               </button>
             )}
           </div>

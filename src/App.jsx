@@ -22,6 +22,7 @@ export default function App() {
           <Route path="/campaign-map" element={<CampaignMapPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/templates/new" element={<TemplateWizard />} />
+          <Route path="/templates/:id/edit" element={<TemplateWizard />} />
           <Route
             path="/records"
             element={<Placeholder title="السجلات" icon={ClipboardList} />}
