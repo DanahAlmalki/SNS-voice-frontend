@@ -11,6 +11,7 @@ import {
   Search,
   RotateCcw,
 } from "lucide-react";
+import { loadTemplates } from "../lib/templates";
 import "./TemplatesPage.css";
 
 const DEMO_TEMPLATES = [
@@ -42,7 +43,10 @@ const DEMO_TEMPLATES = [
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState(DEMO_TEMPLATES);
+  const [templates, setTemplates] = useState(() => [
+    ...loadTemplates(),
+    ...DEMO_TEMPLATES,
+  ]);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({ name: "", description: "" });
   const [query, setQuery] = useState("");
@@ -50,12 +54,12 @@ export default function TemplatesPage() {
   const [voice, setVoice] = useState("all");
 
   const objectives = useMemo(
-    () => [...new Set(DEMO_TEMPLATES.map((t) => t.objective))],
-    [],
+    () => [...new Set(templates.map((t) => t.objective))],
+    [templates],
   );
   const voices = useMemo(
-    () => [...new Set(DEMO_TEMPLATES.map((t) => t.voice))],
-    [],
+    () => [...new Set(templates.map((t) => t.voice))],
+    [templates],
   );
 
   const filtered = useMemo(

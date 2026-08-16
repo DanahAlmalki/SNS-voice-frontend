@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Volume2,
   Play,
@@ -16,6 +17,7 @@ import {
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
 import { buildOverrides, VOICE_PRESETS } from "./lib/buildOverrides";
+import { saveTemplate } from "./lib/templates";
 import "./TemplateWizard.css";
 
 const STEPS = [
@@ -117,6 +119,7 @@ const initialData = {
 };
 
 export default function TemplateWizard() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [data, setData] = useState(initialData);
   const [showCall, setShowCall] = useState(false);
@@ -131,6 +134,21 @@ export default function TemplateWizard() {
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  const finish = () => {
+    const voicePreset = VOICE_PRESETS.find((v) => v.id === data.voice);
+    const objectiveLabel =
+      OBJECTIVES.find((o) => o.id === data.objective)?.title || "بدون هدف";
+    saveTemplate({
+      id: Date.now(),
+      name: data.name || "قالب بدون اسم",
+      description: data.purpose || data.opening || "",
+      objective: objectiveLabel,
+      voice: voicePreset ? `صوت ${voicePreset.hint}` : "غير محدد",
+      updated: "الآن",
+    });
+    navigate("/templates");
+  };
 
   return (
     <div className="wizard-page" dir="rtl">
@@ -187,10 +205,7 @@ export default function TemplateWizard() {
                 <ArrowLeft size={18} />
               </button>
             ) : (
-              <button
-                className="btn btn--primary"
-                onClick={() => console.log("SAVE TEMPLATE", { data, config })}
-              >
+              <button className="btn btn--primary" onClick={finish}>
                 <Check size={18} />
                 حفظ القالب
               </button>
