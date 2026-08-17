@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Volume2,
   Play,
+  Phone,
   Plus,
   Trash2,
   Check,
@@ -80,9 +81,15 @@ export default function TemplateWizard() {
     return existing ? { ...initialData, ...existing.data } : initialData;
   });
   const [showCall, setShowCall] = useState(false);
+  const [callMode, setCallMode] = useState("browser");
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
   const overrides = useMemo(() => buildOverrides(data), [data]);
+
+  const openCall = (mode) => {
+    setCallMode(mode);
+    setShowCall(true);
+  };
 
   const chooseObjective = (id) => {
     const starter = STARTER_SCRIPTS[id] || {};
@@ -166,9 +173,16 @@ export default function TemplateWizard() {
         <aside className="wizard__preview">
           <h3 className="preview__title">معاينة مباشرة</h3>
           <ScriptPreview data={data} />
-          <button className="btn btn--test" onClick={() => setShowCall(true)}>
+          <button className="btn btn--test" onClick={() => openCall("browser")}>
             <Play size={16} />
             اتصال تجريبي
+          </button>
+          <button
+            className="btn btn--test-outline"
+            onClick={() => openCall("phone")}
+          >
+            <Phone size={16} />
+            اتصال حقيقي
           </button>
         </aside>
       </div>
@@ -180,6 +194,7 @@ export default function TemplateWizard() {
         greeting={data.opening}
         name={data.name}
         overrides={overrides}
+        mode={callMode}
       />
     </div>
   );

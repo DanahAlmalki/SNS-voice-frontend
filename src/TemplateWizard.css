@@ -331,6 +331,17 @@
 .btn--test:hover {
   background: var(--vibrant-hover);
 }
+.btn--test-outline {
+  width: 100%;
+  margin-top: var(--sp-2);
+  background: transparent;
+  color: var(--vibrant);
+  border: 1px solid var(--vibrant);
+}
+.btn--test-outline:hover {
+  background: var(--vibrant);
+  color: #fff;
+}
 
 /* Preview */
 .wizard__preview {

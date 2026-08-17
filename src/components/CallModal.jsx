@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { X, PhoneOff, Copy, Check, Mic, Loader2 } from "lucide-react";
+import { X, PhoneOff, Phone, Copy, Check, Mic, Loader2 } from "lucide-react";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { createCampaign } from "../lib/campaigns";
+import { startOutboundCall } from "../lib/outboundCall";
 import "./CallModal.css";
 
 const STATE_LABEL = {
@@ -21,33 +22,51 @@ export default function CallModal({
   greeting,
   name,
   overrides,
+  // "browser": auto-start the in-browser mic trial call (default, unchanged).
+  // "phone": skip the mic/WS and open straight on the real-call tab instead.
+  mode = "browser",
 }) {
-  const [tab, setTab] = useState("call");
+  const isPhoneMode = mode === "phone";
+  const [tab, setTab] = useState(isPhoneMode ? "phone" : "call");
   const [copied, setCopied] = useState(false);
   const [setupError, setSetupError] = useState(null);
+  const [campaignId, setCampaignId] = useState(null);
+  const [phone, setPhone] = useState("");
+  const [callSubmitting, setCallSubmitting] = useState(false);
+  const [callResult, setCallResult] = useState(null);
+  const [callError, setCallError] = useState(null);
   const { start, stop, connected, state, messages, vadProb, error } =
     useVoiceAgent();
   const started = useRef(false);
   const chatEndRef = useRef(null);
 
-  // Register the prompt + overrides as a campaign, then open the socket bound
-  // to its id — the overrides only apply at pipeline build time.
+  // Register the prompt + overrides as a campaign, then either open the
+  // browser mic socket (trial call) or just keep the id for a real Twilio
+  // call — the overrides only apply at pipeline build time either way.
   useEffect(() => {
     if (open && !started.current) {
       started.current = true;
       setSetupError(null);
       createCampaign({ name, prompt, greeting, overrides })
-        .then((campaignId) => start(campaignId))
+        .then((id) => {
+          setCampaignId(id);
+          if (!isPhoneMode) start(id);
+        })
         .catch((err) => setSetupError(err.message || "تعذّر بدء المكالمة"));
     }
     if (!open && started.current) {
       started.current = false;
       stop();
-      setTab("call");
+      setTab(isPhoneMode ? "phone" : "call");
       setCopied(false);
       setSetupError(null);
+      setCampaignId(null);
+      setPhone("");
+      setCallSubmitting(false);
+      setCallResult(null);
+      setCallError(null);
     }
-  }, [open, start, stop, prompt, greeting, name, overrides]);
+  }, [open, start, stop, prompt, greeting, name, overrides, isPhoneMode]);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && open && handleEnd();
@@ -73,6 +92,20 @@ export default function CallModal({
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const handleRealCall = async () => {
+    setCallError(null);
+    setCallResult(null);
+    setCallSubmitting(true);
+    try {
+      const result = await startOutboundCall({ to: phone, campaignId });
+      setCallResult(result);
+    } catch (err) {
+      setCallError(err.message || "تعذّر بدء الاتصال الحقيقي");
+    } finally {
+      setCallSubmitting(false);
+    }
+  };
+
   const isSpeaking = state === "speaking_tts";
   const isThinking = state === "processing_stt" || state === "thinking_llm";
   const isListening = state === "listening" || state === "user_speaking";
@@ -96,12 +129,21 @@ export default function CallModal({
       >
         <header className="call-modal__head">
           <div className="call-modal__tabs">
-            <button
-              className={`call-tab ${tab === "call" ? "is-active" : ""}`}
-              onClick={() => setTab("call")}
-            >
-              المكالمة
-            </button>
+            {isPhoneMode ? (
+              <button
+                className={`call-tab ${tab === "phone" ? "is-active" : ""}`}
+                onClick={() => setTab("phone")}
+              >
+                اتصال حقيقي
+              </button>
+            ) : (
+              <button
+                className={`call-tab ${tab === "call" ? "is-active" : ""}`}
+                onClick={() => setTab("call")}
+              >
+                المكالمة
+              </button>
+            )}
             <button
               className={`call-tab ${tab === "prompt" ? "is-active" : ""}`}
               onClick={() => setTab("prompt")}
@@ -173,6 +215,51 @@ export default function CallModal({
               <button className="btn btn--danger" onClick={handleEnd}>
                 <PhoneOff size={16} />
                 إنهاء المكالمة
+              </button>
+            </footer>
+          </div>
+        ) : tab === "phone" ? (
+          <div className="phone-view">
+            <p className="phone-view__intro">
+              أدخل رقم الجوال (مع رمز الدولة) لبدء مكالمة هاتفية حقيقية بهذا
+              القالب عبر تويليو.
+            </p>
+            <label className="phone-field">
+              <span className="phone-field__label">رقم الجوال</span>
+              <input
+                type="tel"
+                dir="ltr"
+                placeholder="+9665XXXXXXXX"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={callSubmitting}
+              />
+            </label>
+            {!campaignId && !setupError && (
+              <p className="muted phone-view__hint">جارٍ تجهيز القالب…</p>
+            )}
+            {(setupError || callError) && (
+              <p className="phone-view__msg phone-view__msg--err">
+                {setupError || callError}
+              </p>
+            )}
+            {callResult && (
+              <p className="phone-view__msg phone-view__msg--ok">
+                تم بدء الاتصال ✓ ({callResult.call_sid}، {callResult.status})
+              </p>
+            )}
+            <footer className="call-modal__foot">
+              <button
+                className="btn btn--primary"
+                disabled={callSubmitting || !campaignId}
+                onClick={handleRealCall}
+              >
+                {callSubmitting ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  <Phone size={16} />
+                )}
+                {callSubmitting ? "جارٍ الاتصال…" : "اتصال"}
               </button>
             </footer>
           </div>
