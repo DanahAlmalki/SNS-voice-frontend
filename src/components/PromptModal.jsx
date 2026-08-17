@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { X, Copy, Check } from "lucide-react";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./PromptModal.css";
 
 export default function PromptModal({ open, onClose, prompt }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -32,8 +34,8 @@ export default function PromptModal({ open, onClose, prompt }) {
         onClick={(e) => e.stopPropagation()}
       >
         <header className="modal__head">
-          <h3 className="modal__title">المطالبة النهائية (Prompt)</h3>
-          <button className="modal__close" onClick={onClose} aria-label="إغلاق">
+          <h3 className="modal__title">{t("promptModal.title")}</h3>
+          <button className="modal__close" onClick={onClose} aria-label={t("promptModal.close")}>
             <X size={18} />
           </button>
         </header>
@@ -45,10 +47,10 @@ export default function PromptModal({ open, onClose, prompt }) {
         <footer className="modal__foot">
           <button className="btn btn--subtle" onClick={copy}>
             {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? "تم النسخ" : "نسخ"}
+            {copied ? t("promptModal.copied") : t("promptModal.copy")}
           </button>
           <button className="btn btn--primary" onClick={onClose}>
-            إغلاق
+            {t("promptModal.close")}
           </button>
         </footer>
       </div>

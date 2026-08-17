@@ -56,7 +56,7 @@
 .sidebar__toggle {
   position: absolute;
   top: 50%;
-  left: var(--sp-3);
+  inset-inline-start: var(--sp-3);
   transform: translateY(-50%);
   display: grid;
   place-items: center;
@@ -123,6 +123,18 @@
   padding: 2px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: var(--r-full);
+}
+/* Same segmented-toggle look as .sidebar__theme, for the AR/EN switch */
+.sidebar__lang {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--r-full);
+}
+.sidebar__lang.is-en .sidebar__theme-thumb {
+  inset-inline-start: 50%;
 }
 /* Slides between the two options */
 .sidebar__theme-thumb {

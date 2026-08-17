@@ -1,6 +1,6 @@
 // Persists wizard-created templates in the browser (no backend endpoint exists for templates).
-import { OBJECTIVES } from "./objectives";
-import { VOICE_PRESETS } from "./buildOverrides";
+import { OBJECTIVES, objectiveTitle } from "./objectives";
+import { VOICE_PRESETS, voiceHint } from "./buildOverrides";
 
 const STORAGE_KEY = "sns-templates";
 
@@ -40,35 +40,47 @@ export const initialData = {
 };
 
 // Seed templates shown before the user saves any of their own.
+// `nameEn`/`purposeEn`/`updatedEn` are only used for these demo seeds when the
+// UI language is English; real user-saved templates keep whatever the user
+// typed regardless of UI language.
 const DEMO_TEMPLATES = [
   {
     id: "demo-1",
     updated: "قبل يومين",
+    updatedEn: "2 days ago",
     data: {
       name: "حملة حجز المواعيد",
+      nameEn: "Appointment Booking Campaign",
       objective: "appointment",
       voice: "salwa",
       purpose: "قالب لتحديد مواعيد مع العملاء المحتملين وعرض الخدمات.",
+      purposeEn: "A template for booking appointments with leads and presenting services.",
     },
   },
   {
     id: "demo-2",
     updated: "قبل ٥ أيام",
+    updatedEn: "5 days ago",
     data: {
       name: "تأهيل العملاء المحتملين",
+      nameEn: "Lead Qualification",
       objective: "qualify",
       voice: "fahad",
       purpose: "أسئلة سريعة لتقييم اهتمام العميل وجاهزيته للشراء.",
+      purposeEn: "Quick questions to assess a lead's interest and readiness to buy.",
     },
   },
   {
     id: "demo-3",
     updated: "قبل أسبوع",
+    updatedEn: "a week ago",
     data: {
       name: "متابعة الطلبات",
+      nameEn: "Order Follow-up",
       objective: "followup",
       voice: "",
       purpose: "الاتصال بالعملاء للتأكد من رضاهم بعد الطلب.",
+      purposeEn: "Calling customers to confirm their satisfaction after an order.",
     },
   },
 ];
@@ -116,16 +128,27 @@ export function deleteTemplate(id) {
 }
 
 // Flattens a wizard record into the summary shown on the templates list/cards.
-export function describeTemplate(record) {
+export function describeTemplate(record, lang = "ar") {
   const d = record.data || {};
   const voicePreset = VOICE_PRESETS.find((v) => v.id === d.voice);
+  const isEn = lang === "en";
+  const name = (isEn ? d.nameEn : d.name) || d.name;
+  const purpose = (isEn ? d.purposeEn : d.purpose) || d.purpose;
+  const updated = (isEn ? record.updatedEn : record.updated) || record.updated;
   return {
     id: record.id,
-    name: d.name || "قالب بدون اسم",
-    description: d.purpose || d.opening || "",
+    name: name || (isEn ? "Untitled template" : "قالب بدون اسم"),
+    description: purpose || d.opening || "",
     objective:
-      OBJECTIVES.find((o) => o.id === d.objective)?.title || "بدون هدف",
-    voice: voicePreset ? `صوت ${voicePreset.hint}` : "غير محدد",
-    updated: record.updated || "",
+      objectiveTitle(OBJECTIVES.find((o) => o.id === d.objective), lang) ||
+      (isEn ? "No objective" : "بدون هدف"),
+    voice: voicePreset
+      ? isEn
+        ? `${voiceHint(voicePreset, lang)} voice`
+        : `صوت ${voiceHint(voicePreset, lang)}`
+      : isEn
+        ? "Not set"
+        : "غير محدد",
+    updated: updated || "",
   };
 }

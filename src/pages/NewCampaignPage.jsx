@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  ArrowLeft,
   UploadCloud,
   FilePlus2,
   FileSpreadsheet,
@@ -11,6 +12,7 @@ import {
   Gauge,
   RotateCcw,
 } from "lucide-react";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./NewCampaignPage.css";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
@@ -26,6 +28,8 @@ export default function NewCampaignPage() {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [files, setFiles] = useState([]);
+  const { t, dir } = useLanguage();
+  const BackIcon = dir === "rtl" ? ArrowRight : ArrowLeft;
 
   const addFiles = (fileList) => {
     const incoming = Array.from(fileList);
@@ -43,26 +47,28 @@ export default function NewCampaignPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
   return (
-    <div className="new-campaign" dir="rtl">
+    <div className="new-campaign" dir={dir}>
       <header className="new-campaign__header">
         <button
           className="new-campaign__back"
           onClick={() => navigate("/campaigns")}
         >
-          <ArrowRight size={16} />
-          رجوع
+          <BackIcon size={16} />
+          {t("newCampaign.back")}
         </button>
         <div className="new-campaign__heading">
-          <h1 className="new-campaign__title">حملة جديدة</h1>
+          <h1 className="new-campaign__title">{t("newCampaign.title")}</h1>
         </div>
         <div className="new-campaign__actions">
           <button
             className="btn btn--ghost"
             onClick={() => navigate("/campaigns")}
           >
-            إلغاء
+            {t("newCampaign.cancel")}
           </button>
-          <button className="btn btn--primary">إنشاء الحملة</button>
+          <button className="btn btn--primary">
+            {t("newCampaign.createCampaign")}
+          </button>
         </div>
       </header>
 
@@ -70,8 +76,8 @@ export default function NewCampaignPage() {
         {/* ---------- Right: Audience import ---------- */}
         <section className="panel nc-col nc-import">
           <div className="nc-col__head">
-            <h2 className="nc-col__title">استيراد الجمهور</h2>
-            <p className="nc-col__desc">رفع ملفات CSV/Excel</p>
+            <h2 className="nc-col__title">{t("newCampaign.importAudienceTitle")}</h2>
+            <p className="nc-col__desc">{t("newCampaign.importAudienceDesc")}</p>
           </div>
 
           <div
@@ -90,10 +96,8 @@ export default function NewCampaignPage() {
             }}
           >
             <UploadCloud className="nc-drop__icon" size={40} />
-            <p className="nc-drop__title">اسحب الملفات وأفلتها هنا</p>
-            <p className="nc-drop__hint">
-              CSV أو Excel — حتى 20 ميجابايت للملف
-            </p>
+            <p className="nc-drop__title">{t("newCampaign.dropTitle")}</p>
+            <p className="nc-drop__hint">{t("newCampaign.dropHint")}</p>
             <button
               type="button"
               className="btn btn--primary btn--sm"
@@ -103,7 +107,7 @@ export default function NewCampaignPage() {
               }}
             >
               <FilePlus2 size={16} />
-              إضافة ملف
+              {t("newCampaign.addFile")}
             </button>
             <input
               ref={inputRef}
@@ -128,7 +132,7 @@ export default function NewCampaignPage() {
                     type="button"
                     className="nc-files__remove"
                     onClick={() => removeFile(i)}
-                    aria-label={`إزالة ${file.name}`}
+                    aria-label={t("newCampaign.removeFileAria", { name: file.name })}
                   >
                     <X size={16} />
                   </button>
@@ -140,40 +144,40 @@ export default function NewCampaignPage() {
           <div className="nc-card__head nc-import__seg-head">
             <Filter size={18} className="nc-card__icon" />
             <div>
-              <h3 className="nc-card__title">التقسيم</h3>
+              <h3 className="nc-card__title">{t("newCampaign.segmentationTitle")}</h3>
             </div>
           </div>
           <div className="nc-fields">
             <div className="filter-field">
               <label className="filter-label" htmlFor="seg-demographic">
-                الخصائص الديموغرافية
+                {t("newCampaign.demographicsLabel")}
               </label>
               <select id="seg-demographic" defaultValue="all">
-                <option value="all">الكل</option>
-                <option value="age">الفئة العمرية</option>
-                <option value="gender">الجنس</option>
-                <option value="region">المنطقة</option>
+                <option value="all">{t("newCampaign.demoAll")}</option>
+                <option value="age">{t("newCampaign.demoAge")}</option>
+                <option value="gender">{t("newCampaign.demoGender")}</option>
+                <option value="region">{t("newCampaign.demoRegion")}</option>
               </select>
             </div>
             <div className="filter-field">
               <label className="filter-label" htmlFor="seg-status">
-                حالة الحساب
+                {t("newCampaign.accountStatusLabel")}
               </label>
               <select id="seg-status" defaultValue="all">
-                <option value="all">كل الحالات</option>
-                <option value="active">نشط</option>
-                <option value="inactive">غير نشط</option>
-                <option value="churned">منسحب</option>
+                <option value="all">{t("newCampaign.statusAll")}</option>
+                <option value="active">{t("newCampaign.statusActive")}</option>
+                <option value="inactive">{t("newCampaign.statusInactive")}</option>
+                <option value="churned">{t("newCampaign.statusChurned")}</option>
               </select>
             </div>
             <div className="filter-field filter-field--grow">
               <label className="filter-label" htmlFor="seg-custom">
-                حقل مخصص
+                {t("newCampaign.customFieldLabel")}
               </label>
               <input
                 id="seg-custom"
                 type="text"
-                placeholder="مثال: القيمة الشرائية > 1000"
+                placeholder={t("newCampaign.customFieldPlaceholder")}
               />
             </div>
           </div>
@@ -185,39 +189,36 @@ export default function NewCampaignPage() {
             <div className="nc-card__head">
               <CalendarClock size={18} className="nc-card__icon" />
               <div>
-                <h3 className="nc-card__title">الجدولة</h3>
-                <p className="nc-card__desc">
-                  جدولة تراعي المنطقة الزمنية، وضبط نافذة الاتصال، واستثناء أيام
-                  العطلات.
-                </p>
+                <h3 className="nc-card__title">{t("newCampaign.schedulingTitle")}</h3>
+                <p className="nc-card__desc">{t("newCampaign.schedulingDesc")}</p>
               </div>
             </div>
             <div className="nc-fields">
               <div className="filter-field">
                 <label className="filter-label" htmlFor="sch-tz">
-                  المنطقة الزمنية
+                  {t("newCampaign.timezoneLabel")}
                 </label>
                 <select id="sch-tz" defaultValue="riyadh">
-                  <option value="riyadh">الرياض (GMT+3)</option>
-                  <option value="cairo">القاهرة (GMT+2)</option>
-                  <option value="dubai">دبي (GMT+4)</option>
+                  <option value="riyadh">{t("newCampaign.tzRiyadh")}</option>
+                  <option value="cairo">{t("newCampaign.tzCairo")}</option>
+                  <option value="dubai">{t("newCampaign.tzDubai")}</option>
                 </select>
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="sch-from">
-                  بداية نافذة الاتصال
+                  {t("newCampaign.windowStartLabel")}
                 </label>
                 <input id="sch-from" type="time" defaultValue="09:00" />
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="sch-to">
-                  نهاية نافذة الاتصال
+                  {t("newCampaign.windowEndLabel")}
                 </label>
                 <input id="sch-to" type="time" defaultValue="18:00" />
               </div>
               <label className="nc-check">
                 <input type="checkbox" defaultChecked />
-                <span>استثناء العطلات الرسمية</span>
+                <span>{t("newCampaign.excludeHolidays")}</span>
               </label>
             </div>
           </div>
@@ -226,17 +227,14 @@ export default function NewCampaignPage() {
             <div className="nc-card__head">
               <Gauge size={18} className="nc-card__icon" />
               <div>
-                <h3 className="nc-card__title">التحكم بالمعدل</h3>
-                <p className="nc-card__desc">
-                  حدود المكالمات المتزامنة، وسقف المعدل في الساعة، وإدارة سعة
-                  المشغّل.
-                </p>
+                <h3 className="nc-card__title">{t("newCampaign.rateControlTitle")}</h3>
+                <p className="nc-card__desc">{t("newCampaign.rateControlDesc")}</p>
               </div>
             </div>
             <div className="nc-fields">
               <div className="filter-field">
                 <label className="filter-label" htmlFor="thr-concurrent">
-                  المكالمات المتزامنة
+                  {t("newCampaign.concurrentCallsLabel")}
                 </label>
                 <input
                   id="thr-concurrent"
@@ -247,7 +245,7 @@ export default function NewCampaignPage() {
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="thr-hourly">
-                  الحد الأقصى في الساعة
+                  {t("newCampaign.hourlyMaxLabel")}
                 </label>
                 <input
                   id="thr-hourly"
@@ -258,12 +256,12 @@ export default function NewCampaignPage() {
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="thr-carrier">
-                  سعة المشغّل
+                  {t("newCampaign.carrierCapacityLabel")}
                 </label>
                 <select id="thr-carrier" defaultValue="auto">
-                  <option value="auto">تلقائي</option>
-                  <option value="low">منخفضة</option>
-                  <option value="high">عالية</option>
+                  <option value="auto">{t("newCampaign.capacityAuto")}</option>
+                  <option value="low">{t("newCampaign.capacityLow")}</option>
+                  <option value="high">{t("newCampaign.capacityHigh")}</option>
                 </select>
               </div>
             </div>
@@ -273,17 +271,14 @@ export default function NewCampaignPage() {
             <div className="nc-card__head">
               <RotateCcw size={18} className="nc-card__icon" />
               <div>
-                <h3 className="nc-card__title">منطق إعادة المحاولة</h3>
-                <p className="nc-card__desc">
-                  فترات إعادة محاولة قابلة للضبط، وحد أقصى للمحاولات، والتحويل
-                  إلى رقم بديل.
-                </p>
+                <h3 className="nc-card__title">{t("newCampaign.retryLogicTitle")}</h3>
+                <p className="nc-card__desc">{t("newCampaign.retryLogicDesc")}</p>
               </div>
             </div>
             <div className="nc-fields">
               <div className="filter-field">
                 <label className="filter-label" htmlFor="retry-interval">
-                  الفاصل بين المحاولات (دقيقة)
+                  {t("newCampaign.retryIntervalLabel")}
                 </label>
                 <input
                   id="retry-interval"
@@ -294,13 +289,13 @@ export default function NewCampaignPage() {
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="retry-max">
-                  الحد الأقصى للمحاولات
+                  {t("newCampaign.retryMaxLabel")}
                 </label>
                 <input id="retry-max" type="number" min="1" defaultValue="3" />
               </div>
               <label className="nc-check">
                 <input type="checkbox" defaultChecked />
-                <span>التحويل إلى رقم بديل عند الفشل</span>
+                <span>{t("newCampaign.fallbackTransfer")}</span>
               </label>
             </div>
           </div>
@@ -309,3 +304,4 @@ export default function NewCampaignPage() {
     </div>
   );
 }
+

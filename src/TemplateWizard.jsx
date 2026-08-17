@@ -12,26 +12,43 @@ import {
 } from "lucide-react";
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
-import { buildOverrides, VOICE_PRESETS } from "./lib/buildOverrides";
+import { buildOverrides, VOICE_PRESETS, voiceLabel, voiceHint } from "./lib/buildOverrides";
 import { initialData, findTemplate, upsertTemplate } from "./lib/templates";
-import { OBJECTIVES } from "./lib/objectives";
+import { OBJECTIVES, objectiveTitle } from "./lib/objectives";
+import { useLanguage } from "./lib/i18n.jsx";
 import "./TemplateWizard.css";
 
 const STEPS = [
-  { id: "basics", label: "المعلومات الأساسية" },
-  { id: "voice", label: "الصوت والشخصية" },
-  { id: "objective", label: "هدف المكالمة" },
-  { id: "script", label: "النص والنقاط" },
-  { id: "objections", label: "الردود على الاعتراضات" },
-  { id: "fallback", label: "الحالات الاحتياطية والامتثال" },
-  { id: "advanced", label: "إعدادات متقدمة (اختياري)" },
+  { id: "basics", labelKey: "wizard.stepBasics" },
+  { id: "voice", labelKey: "wizard.stepVoice" },
+  { id: "objective", labelKey: "wizard.stepObjective" },
+  { id: "script", labelKey: "wizard.stepScript" },
+  { id: "objections", labelKey: "wizard.stepObjections" },
+  { id: "fallback", labelKey: "wizard.stepFallback" },
+  { id: "advanced", labelKey: "wizard.stepAdvanced" },
 ];
 
 const PERSONALITIES = [
-  { id: "friendly", title: "ودود", desc: "دافئ وعفوي كصديق مساعد" },
-  { id: "professional", title: "احترافي", desc: "رسمي ومصقول كرجل أعمال" },
-  { id: "enthusiastic", title: "متحمّس", desc: "نشيط ومفعم بالحيوية" },
-  { id: "consultative", title: "استشاري", desc: "هادئ وصبور ومقنع" },
+  {
+    id: "friendly",
+    titleKey: "wizard.personalityFriendlyTitle",
+    descKey: "wizard.personalityFriendlyDesc",
+  },
+  {
+    id: "professional",
+    titleKey: "wizard.personalityProfessionalTitle",
+    descKey: "wizard.personalityProfessionalDesc",
+  },
+  {
+    id: "enthusiastic",
+    titleKey: "wizard.personalityEnthusiasticTitle",
+    descKey: "wizard.personalityEnthusiasticDesc",
+  },
+  {
+    id: "consultative",
+    titleKey: "wizard.personalityConsultativeTitle",
+    descKey: "wizard.personalityConsultativeDesc",
+  },
 ];
 
 // The greeting is spoken verbatim and the backend only substitutes {staff_name}.
@@ -74,6 +91,9 @@ const STARTER_SCRIPTS = {
 
 export default function TemplateWizard() {
   const navigate = useNavigate();
+  const { t, lang, dir } = useLanguage();
+  const BackIcon = dir === "rtl" ? ArrowRight : ArrowLeft;
+  const NextIcon = dir === "rtl" ? ArrowLeft : ArrowRight;
   const { id: templateId } = useParams();
   const [step, setStep] = useState(0);
   const [data, setData] = useState(() => {
@@ -100,19 +120,17 @@ export default function TemplateWizard() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const finish = () => {
-    upsertTemplate({ id: templateId ?? Date.now(), updated: "الآن", data });
+    upsertTemplate({ id: templateId ?? Date.now(), updated: t("wizard.now"), data });
     navigate("/templates");
   };
 
   return (
-    <div className="wizard-page" dir="rtl">
+    <div className="wizard-page" dir={dir}>
       <header className="page-head">
         <h1 className="page-head__title">
-          {templateId ? "تعديل القالب" : "إنشاء قالب مكالمة"}
+          {templateId ? t("wizard.pageTitleEdit") : t("wizard.pageTitleNew")}
         </h1>
-        <p className="page-head__sub">
-          صمّم شخصية الوكيل ونص المكالمة الصادرة خطوة بخطوة.
-        </p>
+        <p className="page-head__sub">{t("wizard.pageSub")}</p>
       </header>
       <div className="wizard">
         {/* Left: form */}
@@ -129,7 +147,7 @@ export default function TemplateWizard() {
                 <span className="steps__num">
                   {i < step ? <Check size={13} strokeWidth={3} /> : i + 1}
                 </span>
-                {s.label}
+                {t(s.labelKey)}
               </li>
             ))}
           </ol>
@@ -152,18 +170,18 @@ export default function TemplateWizard() {
               onClick={back}
               disabled={step === 0}
             >
-              <ArrowRight size={18} />
-              السابق
+              <BackIcon size={18} />
+              {t("wizard.previous")}
             </button>
             {step < STEPS.length - 1 ? (
               <button className="btn btn--primary" onClick={next}>
-                التالي
-                <ArrowLeft size={18} />
+                {t("wizard.next")}
+                <NextIcon size={18} />
               </button>
             ) : (
               <button className="btn btn--primary" onClick={finish}>
                 <Check size={18} />
-                {templateId ? "حفظ التعديلات" : "حفظ القالب"}
+                {templateId ? t("wizard.saveChanges") : t("wizard.saveTemplate")}
               </button>
             )}
           </div>
@@ -171,18 +189,18 @@ export default function TemplateWizard() {
 
         {/* Right: live preview */}
         <aside className="wizard__preview">
-          <h3 className="preview__title">معاينة مباشرة</h3>
+          <h3 className="preview__title">{t("wizard.previewTitle")}</h3>
           <ScriptPreview data={data} />
           <button className="btn btn--test" onClick={() => openCall("browser")}>
             <Play size={16} />
-            اتصال تجريبي
+            {t("wizard.trialCall")}
           </button>
           <button
             className="btn btn--test-outline"
             onClick={() => openCall("phone")}
           >
             <Phone size={16} />
-            اتصال حقيقي
+            {t("wizard.realCall")}
           </button>
         </aside>
       </div>
@@ -215,33 +233,34 @@ function Field({ label, children, hint }) {
 /* ---------- Steps ---------- */
 
 function BasicsStep({ data, set }) {
+  const { t } = useLanguage();
   return (
     <section>
-      <h2>المعلومات الأساسية</h2>
-      <Field label="اسم القالب">
+      <h2>{t("wizard.stepBasics")}</h2>
+      <Field label={t("wizard.templateNameLabel")}>
         <input
           value={data.name}
           onChange={(e) => set({ name: e.target.value })}
-          placeholder="مثال: حملة حجز المواعيد"
+          placeholder={t("wizard.templateNamePlaceholder")}
         />
       </Field>
-      <Field label="اللغة">
+      <Field label={t("wizard.languageLabel")}>
         <select
           value={data.language}
           onChange={(e) => set({ language: e.target.value })}
         >
-          <option value="ar">العربية</option>
-          <option value="en">الإنجليزية</option>
+          <option value="ar">{t("wizard.langArabic")}</option>
+          <option value="en">{t("wizard.langEnglish")}</option>
         </select>
       </Field>
-      <Field label="اسم النشاط التجاري">
+      <Field label={t("wizard.brandLabel")}>
         <input
           value={data.brand}
           onChange={(e) => set({ brand: e.target.value })}
-          placeholder="مثال: شركة أكمي"
+          placeholder={t("wizard.brandPlaceholder")}
         />
       </Field>
-      <Field label="صف شركتك أو جهتك" hint="يساعد الوكيل على فهم السياق">
+      <Field label={t("wizard.describeLabel")} hint={t("wizard.describeHint")}>
         <textarea
           value={data.product}
           onChange={(e) => set({ product: e.target.value })}
@@ -253,10 +272,11 @@ function BasicsStep({ data, set }) {
 }
 
 function VoiceStep({ data, set }) {
+  const { t, lang } = useLanguage();
   return (
     <section>
-      <h2>الصوت والشخصية</h2>
-      <Field label="اختيار الصوت">
+      <h2>{t("wizard.stepVoice")}</h2>
+      <Field label={t("wizard.chooseVoiceLabel")}>
         <div className="voice-list">
           {VOICE_PRESETS.map((v) => (
             <button
@@ -265,18 +285,18 @@ function VoiceStep({ data, set }) {
               onClick={() => set({ voice: v.id })}
             >
               <Volume2 size={16} />
-              {v.label}
-              <small>{v.hint}</small>
+              {voiceLabel(v, lang)}
+              <small>{voiceHint(v, lang)}</small>
             </button>
           ))}
         </div>
       </Field>
-      <Field label="سرعة التحدث">
+      <Field label={t("wizard.speedLabel")}>
         <div className="segmented">
           {[
-            ["slow", "بطيء"],
-            ["normal", "عادي"],
-            ["fast", "سريع"],
+            ["slow", t("wizard.speedSlow")],
+            ["normal", t("wizard.speedNormal")],
+            ["fast", t("wizard.speedFast")],
           ].map(([val, lbl]) => (
             <button
               key={val}
@@ -288,7 +308,7 @@ function VoiceStep({ data, set }) {
           ))}
         </div>
       </Field>
-      <Field label="الشخصية">
+      <Field label={t("wizard.personalityLabel")}>
         <div className="cards">
           {PERSONALITIES.map((p) => (
             <button
@@ -296,8 +316,8 @@ function VoiceStep({ data, set }) {
               className={`card ${data.personality === p.id ? "is-selected" : ""}`}
               onClick={() => set({ personality: p.id })}
             >
-              <strong>{p.title}</strong>
-              <span>{p.desc}</span>
+              <strong>{t(p.titleKey)}</strong>
+              <span>{t(p.descKey)}</span>
             </button>
           ))}
         </div>
@@ -307,12 +327,11 @@ function VoiceStep({ data, set }) {
 }
 
 function ObjectiveStep({ data, choose }) {
+  const { t, lang } = useLanguage();
   return (
     <section>
-      <h2>هدف المكالمة</h2>
-      <p className="muted">
-        اختر الهدف وسنقوم بتعبئة نص مبدئي جاهز يمكنك تعديله.
-      </p>
+      <h2>{t("wizard.stepObjective")}</h2>
+      <p className="muted">{t("wizard.objectiveDesc")}</p>
       <div className="cards cards--objective">
         {OBJECTIVES.map((o) => {
           const Icon = o.icon;
@@ -327,7 +346,7 @@ function ObjectiveStep({ data, choose }) {
               <span className="card__icon">
                 <Icon size={22} strokeWidth={2} />
               </span>
-              <strong>{o.title}</strong>
+              <strong>{objectiveTitle(o, lang)}</strong>
             </button>
           );
         })}
@@ -337,12 +356,13 @@ function ObjectiveStep({ data, choose }) {
 }
 
 function TokenBar({ onInsert, tokens }) {
+  const { t } = useLanguage();
   return (
     <div className="tokens">
-      <span className="tokens__label">إدراج حقل:</span>
-      {tokens.map((t) => (
-        <button key={t} className="token" onClick={() => onInsert(t)}>
-          {t}
+      <span className="tokens__label">{t("wizard.insertField")}</span>
+      {tokens.map((token) => (
+        <button key={token} className="token" onClick={() => onInsert(token)}>
+          {token}
         </button>
       ))}
     </div>
@@ -350,17 +370,15 @@ function TokenBar({ onInsert, tokens }) {
 }
 
 function ScriptStep({ data, set }) {
+  const { t } = useLanguage();
   const append = (field) => (token) =>
     set({ [field]: (data[field] || "") + " " + token });
 
   return (
     <section>
-      <h2>النص والنقاط الرئيسية</h2>
+      <h2>{t("wizard.stepScript")}</h2>
 
-      <Field
-        label="الافتتاحية"
-        hint="تُنطق كما هي في بداية المكالمة — {staff_name} يُستبدل باسم الصوت المختار."
-      >
+      <Field label={t("wizard.openingLabel")} hint={t("wizard.openingHint")}>
         <TokenBar tokens={GREETING_TOKENS} onInsert={append("opening")} />
         <textarea
           value={data.opening}
@@ -369,7 +387,7 @@ function ScriptStep({ data, set }) {
         />
       </Field>
 
-      <Field label="سبب الاتصال">
+      <Field label={t("wizard.reasonLabel")}>
         <textarea
           value={data.purpose}
           onChange={(e) => set({ purpose: e.target.value })}
@@ -377,7 +395,7 @@ function ScriptStep({ data, set }) {
         />
       </Field>
 
-      <Field label="النقاط الرئيسية">
+      <Field label={t("wizard.keyPointsLabel")}>
         <textarea
           value={data.points}
           onChange={(e) => set({ points: e.target.value })}
@@ -385,7 +403,7 @@ function ScriptStep({ data, set }) {
         />
       </Field>
 
-      <Field label="الدعوة لاتخاذ إجراء">
+      <Field label={t("wizard.ctaLabel")}>
         <textarea
           value={data.cta}
           onChange={(e) => set({ cta: e.target.value })}
@@ -397,6 +415,7 @@ function ScriptStep({ data, set }) {
 }
 
 function ObjectionsStep({ data, set }) {
+  const { t } = useLanguage();
   const update = (i, patch) => {
     const list = data.objections.map((o, idx) =>
       idx === i ? { ...o, ...patch } : o,
@@ -410,48 +429,49 @@ function ObjectionsStep({ data, set }) {
 
   return (
     <section>
-      <h2>الردود على الاعتراضات</h2>
-      <p className="muted">اختياري: كيف يرد الوكيل في المواقف الشائعة.</p>
+      <h2>{t("wizard.stepObjections")}</h2>
+      <p className="muted">{t("wizard.objectionsDesc")}</p>
       {data.objections.map((o, i) => (
         <div className="objection" key={i}>
-          <Field label="إذا قال العميل…">
+          <Field label={t("wizard.triggerLabel")}>
             <input
               value={o.trigger}
               onChange={(e) => update(i, { trigger: e.target.value })}
-              placeholder="مثال: أنا مشغول الآن"
+              placeholder={t("wizard.triggerPlaceholder")}
             />
           </Field>
-          <Field label="يرد الوكيل…">
+          <Field label={t("wizard.responseLabel")}>
             <input
               value={o.response}
               onChange={(e) => update(i, { response: e.target.value })}
-              placeholder="مثال: بالطبع، متى يناسبك أن أعاود الاتصال؟"
+              placeholder={t("wizard.responsePlaceholder")}
             />
           </Field>
           <button className="btn btn--danger btn--sm" onClick={() => remove(i)}>
             <Trash2 size={16} />
-            حذف
+            {t("wizard.deleteBtn")}
           </button>
         </div>
       ))}
       <button className="btn btn--subtle" onClick={add}>
         <Plus size={18} />
-        إضافة اعتراض
+        {t("wizard.addObjection")}
       </button>
     </section>
   );
 }
 
 function FallbackStep({ data, set }) {
+  const { t } = useLanguage();
   return (
     <section>
-      <h2>الحالات الاحتياطية والامتثال</h2>
+      <h2>{t("wizard.stepFallback")}</h2>
 
-      <Field label="عند الوصول للبريد الصوتي">
+      <Field label={t("wizard.voicemailLabel")}>
         <div className="segmented">
           {[
-            ["hangup", "إنهاء المكالمة"],
-            ["leave", "ترك رسالة"],
+            ["hangup", t("wizard.voicemailHangup")],
+            ["leave", t("wizard.voicemailLeave")],
           ].map(([val, lbl]) => (
             <button
               key={val}
@@ -465,7 +485,7 @@ function FallbackStep({ data, set }) {
       </Field>
 
       {data.voicemail === "leave" && (
-        <Field label="نص الرسالة الصوتية">
+        <Field label={t("wizard.voicemailTextLabel")}>
           <textarea
             value={data.voicemailText}
             onChange={(e) => set({ voicemailText: e.target.value })}
@@ -474,19 +494,19 @@ function FallbackStep({ data, set }) {
         </Field>
       )}
 
-      <Field label="التحويل إلى موظف بشري">
+      <Field label={t("wizard.humanTransferLabel")}>
         <label className="switch">
           <input
             type="checkbox"
             checked={data.transfer}
             onChange={(e) => set({ transfer: e.target.checked })}
           />
-          <span>تفعيل التحويل</span>
+          <span>{t("wizard.enableTransfer")}</span>
         </label>
       </Field>
 
       {data.transfer && (
-        <Field label="رقم التحويل">
+        <Field label={t("wizard.transferNumberLabel")}>
           <input
             value={data.transferNumber}
             onChange={(e) => set({ transferNumber: e.target.value })}
@@ -496,18 +516,18 @@ function FallbackStep({ data, set }) {
       )}
 
       <Field
-        label="التعامل مع طلب إلغاء الاشتراك"
-        hint="مهم للامتثال القانوني للمكالمات الصادرة"
+        label={t("wizard.optOutLabel")}
+        hint={t("wizard.optOutHint")}
       >
         <textarea
           value={data.optOut}
           onChange={(e) => set({ optOut: e.target.value })}
           rows={2}
-          placeholder="مثال: بالطبع، سأزيل رقمك من قائمتنا فوراً. شكراً لوقتك."
+          placeholder={t("wizard.optOutPlaceholder")}
         />
       </Field>
 
-      <Field label="أقصى مدة للمكالمة (دقائق)">
+      <Field label={t("wizard.maxDurationLabel")}>
         <input
           type="number"
           min={1}
@@ -537,12 +557,11 @@ function NumberField({ label, value, onChange, placeholder, step, min, max }) {
 }
 
 function AdvancedStep({ data, set }) {
+  const { t } = useLanguage();
   return (
     <section className="adv-step">
-      <h2>إعدادات متقدمة</h2>
-      <p className="muted">
-        اختياري — اترك الحقل فارغاً لاستخدام القيمة الافتراضية.
-      </p>
+      <h2>{t("wizard.stepAdvanced")}</h2>
+      <p className="muted">{t("wizard.advancedIntro")}</p>
 
       <h3 className="adv-group">Language model</h3>
       <div className="adv-grid">
@@ -662,15 +681,16 @@ function AdvancedStep({ data, set }) {
 /* ---------- Preview ---------- */
 
 function ScriptPreview({ data }) {
+  const { t } = useLanguage();
   const rows = [
-    ["الافتتاحية", data.opening],
-    ["سبب الاتصال", data.purpose],
-    ["النقاط", data.points],
-    ["الدعوة لاتخاذ إجراء", data.cta],
+    [t("wizard.previewOpening"), data.opening],
+    [t("wizard.previewReason"), data.purpose],
+    [t("wizard.previewPoints"), data.points],
+    [t("wizard.previewCta"), data.cta],
   ].filter(([, v]) => v);
 
   if (!rows.length) {
-    return <p className="muted">اختر هدف المكالمة لعرض النص المبدئي هنا.</p>;
+    return <p className="muted">{t("wizard.previewEmpty")}</p>;
   }
 
   return (

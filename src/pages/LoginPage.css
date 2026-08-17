@@ -62,7 +62,7 @@
 }
 
 .login__forgot {
-  text-align: left;
+  text-align: end;
   color: #2563eb;
   text-decoration: none;
   font-size: var(--fs-sm);

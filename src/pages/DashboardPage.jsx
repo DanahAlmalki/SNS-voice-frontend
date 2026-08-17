@@ -10,45 +10,51 @@ import {
   CalendarDays,
   ListFilter,
 } from "lucide-react";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./DashboardPage.css";
 
-const nf = new Intl.NumberFormat("ar-EG");
-const money = new Intl.NumberFormat("ar-EG", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const dayMonthFmt = new Intl.DateTimeFormat("ar-EG", {
-  day: "numeric",
-  month: "numeric",
-});
-const fullDateFmt = new Intl.DateTimeFormat("ar-EG", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
 const CAMPAIGNS = [
-  { name: "حملة حجز المواعيد - الربع الثالث", weight: 0.34, baseRate: 78 },
-  { name: "استطلاع رضا العملاء", weight: 0.28, baseRate: 71 },
-  { name: "تأهيل العملاء المحتملين", weight: 0.22, baseRate: 66 },
-  { name: "متابعة الطلبات - العملاء الجدد", weight: 0.16, baseRate: 59 },
+  {
+    name: "حملة حجز المواعيد - الربع الثالث",
+    nameEn: "Appointment Booking Campaign - Q3",
+    weight: 0.34,
+    baseRate: 78,
+  },
+  {
+    name: "استطلاع رضا العملاء",
+    nameEn: "Customer Satisfaction Survey",
+    weight: 0.28,
+    baseRate: 71,
+  },
+  {
+    name: "تأهيل العملاء المحتملين",
+    nameEn: "Lead Qualification",
+    weight: 0.22,
+    baseRate: 66,
+  },
+  {
+    name: "متابعة الطلبات - العملاء الجدد",
+    nameEn: "Order Follow-up - New Customers",
+    weight: 0.16,
+    baseRate: 59,
+  },
 ];
 
 const OUTCOME_META = [
-  { key: "success", label: "مكتملة بنجاح", cls: "is-success" },
-  { key: "no_answer", label: "بدون رد", cls: "is-warning" },
-  { key: "failed", label: "فاشلة", cls: "is-danger" },
+  { key: "success", labelKey: "dashboard.outcomeSuccess", cls: "is-success" },
+  { key: "no_answer", labelKey: "dashboard.outcomeNoAnswer", cls: "is-warning" },
+  { key: "failed", labelKey: "dashboard.outcomeFailed", cls: "is-danger" },
 ];
 
-const BALANCE = { amount: 12450.75, currency: "ر.س", minutes: 8320 };
+const BALANCE = { amount: 12450.75, minutes: 8320 };
 
 /* Semi-circle arc, left to right over the top (cx 50, cy 50, r 40) */
 const GAUGE_ARC = "M 10 50 A 40 40 0 0 1 90 50";
 
 const PRESETS = [
-  { key: "today", label: "اليوم", days: 1 },
-  { key: "7d", label: "آخر 7 أيام", days: 7 },
-  { key: "30d", label: "آخر 30 يوم", days: 30 },
+  { key: "today", labelKey: "dashboard.presetToday", days: 1 },
+  { key: "7d", labelKey: "dashboard.preset7d", days: 7 },
+  { key: "30d", labelKey: "dashboard.preset30d", days: 30 },
 ];
 
 const MS_DAY = 86400000;
@@ -163,10 +169,10 @@ function dayCallsFor(day, campaignName) {
 }
 
 // Reduce a list of daily records to at most `maxBars` chart columns.
-function buildChart(days, campaignName, maxBars = 12) {
+function buildChart(days, campaignName, maxBars = 12, dateFmt) {
   if (days.length <= maxBars) {
     return days.map((d) => ({
-      label: dayMonthFmt.format(d.date),
+      label: dateFmt.format(d.date),
       value: dayCallsFor(d, campaignName),
     }));
   }
@@ -175,7 +181,7 @@ function buildChart(days, campaignName, maxBars = 12) {
   for (let i = 0; i < days.length; i += bucketSize) {
     const slice = days.slice(i, i + bucketSize);
     bars.push({
-      label: dayMonthFmt.format(slice[0].date),
+      label: dateFmt.format(slice[0].date),
       value: slice.reduce((s, d) => s + dayCallsFor(d, campaignName), 0),
     });
   }
@@ -184,6 +190,33 @@ function buildChart(days, campaignName, maxBars = 12) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { t, lang } = useLanguage();
+  const isEn = lang === "en";
+  const locale = isEn ? "en-US" : "ar-EG";
+  const nf = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const money = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [locale],
+  );
+  const dayMonthFmt = useMemo(
+    () => new Intl.DateTimeFormat(locale, { day: "numeric", month: "numeric" }),
+    [locale],
+  );
+  const fullDateFmt = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    [locale],
+  );
+  const campaignDisplayName = (name) =>
+    (isEn ? CAMPAIGNS.find((c) => c.name === name)?.nameEn : null) || name;
   const today = useMemo(() => startOfDay(new Date()), []);
   const dailyData = useMemo(() => buildDailyData(today), [today]);
 
@@ -242,39 +275,39 @@ export default function DashboardPage() {
     () => [
       {
         key: "calls",
-        label: "إجمالي المكالمات",
+        label: t("dashboard.statCalls"),
         value: nf.format(current.calls),
         delta: pctDelta(current.calls, previous.calls),
         icon: PhoneCall,
       },
       {
         key: "connected",
-        label: "المكالمات المُتصلة",
+        label: t("dashboard.statConnected"),
         value: nf.format(current.connected),
         delta: pctDelta(current.connected, previous.connected),
         icon: PhoneOutgoing,
       },
       {
         key: "campaigns",
-        label: "الحملات النشطة",
+        label: t("dashboard.statCampaigns"),
         value: nf.format(activeCount(current)),
         delta: pctDelta(activeCount(current), activeCount(previous)),
         icon: Megaphone,
       },
       {
         key: "duration",
-        label: "متوسط مدة المكالمة",
+        label: t("dashboard.statDuration"),
         value: fmtDuration(current.avgDuration),
         delta: pctDelta(current.avgDuration, previous.avgDuration),
         icon: Timer,
       },
     ],
-    [current, previous],
+    [current, previous, nf, lang, t],
   );
 
   const spark = useMemo(
-    () => buildChart(selectedDays, campaignFilter, 24),
-    [selectedDays, campaignFilter],
+    () => buildChart(selectedDays, campaignFilter, 24, dayMonthFmt),
+    [selectedDays, campaignFilter, dayMonthFmt],
   );
 
   // Normalise the series into a 0-100 viewBox so the SVG can stretch freely.
@@ -330,13 +363,13 @@ export default function DashboardPage() {
       <section className="hero">
         <div className="hero__aside">
           <div className="hero__balance">
-            <p className="hero__balance-label">الرصيد المتاح</p>
+            <p className="hero__balance-label">{t("dashboard.balanceLabel")}</p>
             <p className="hero__balance-value">
               {money.format(BALANCE.amount)}
-              <span className="hero__balance-currency">{BALANCE.currency}</span>
+              <span className="hero__balance-currency">{t("dashboard.currency")}</span>
             </p>
             <p className="hero__balance-meta">
-              {nf.format(BALANCE.minutes)} دقيقة متبقية
+              {t("dashboard.minutesRemaining", { n: nf.format(BALANCE.minutes) })}
             </p>
           </div>
 
@@ -346,13 +379,13 @@ export default function DashboardPage() {
             onClick={() => navigate("/campaigns/new")}
           >
             <Megaphone size={16} />
-            حملة جديدة
+            {t("dashboard.newCampaignCta")}
           </button>
         </div>
 
         <div className="hero__chart">
           <div className="hero__chart-head">
-            <h2 className="hero__chart-title">المكالمات خلال الفترة</h2>
+            <h2 className="hero__chart-title">{t("dashboard.callsOverPeriodTitle")}</h2>
             <span className="hero__chart-total">
               {nf.format(current.calls)}
             </span>
@@ -362,7 +395,7 @@ export default function DashboardPage() {
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
             role="img"
-            aria-label="مخطط المكالمات خلال الفترة المحددة"
+            aria-label={t("dashboard.chartAriaLabel")}
           >
             <defs>
               <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
@@ -394,7 +427,7 @@ export default function DashboardPage() {
                     className={`range-toggle__btn ${preset === p.key ? "is-active" : ""}`}
                     onClick={() => setPreset(p.key)}
                   >
-                    {p.label}
+                    {t(p.labelKey)}
                   </button>
                 ))}
                 <button
@@ -405,7 +438,7 @@ export default function DashboardPage() {
                   onClick={() => setPreset("custom")}
                 >
                   <CalendarDays size={14} />
-                  مخصص
+                  {t("dashboard.presetCustom")}
                 </button>
               </div>
 
@@ -414,12 +447,12 @@ export default function DashboardPage() {
                 <select
                   value={campaign}
                   onChange={(e) => setCampaign(e.target.value)}
-                  aria-label="اختيار الحملة"
+                  aria-label={t("dashboard.campaignSelectAria")}
                 >
-                  <option value="all">كل الحملات</option>
+                  <option value="all">{t("dashboard.allCampaigns")}</option>
                   {CAMPAIGNS.map((c) => (
                     <option key={c.name} value={c.name}>
-                      {c.name}
+                      {campaignDisplayName(c.name)}
                     </option>
                   ))}
                 </select>
@@ -429,7 +462,7 @@ export default function DashboardPage() {
             {preset === "custom" ? (
               <div className="dashboard__range-custom">
                 <label className="range-date">
-                  <span>من</span>
+                  <span>{t("dashboard.fromLabel")}</span>
                   <input
                     type="date"
                     value={from}
@@ -439,7 +472,7 @@ export default function DashboardPage() {
                   />
                 </label>
                 <label className="range-date">
-                  <span>إلى</span>
+                  <span>{t("dashboard.toLabel")}</span>
                   <input
                     type="date"
                     value={to}
@@ -475,7 +508,7 @@ export default function DashboardPage() {
                 </p>
                 <p
                   className={`stat-card__delta ${up ? "is-up" : "is-down"}`}
-                  title="مقارنة بالفترة السابقة"
+                  title={t("dashboard.deltaTitle")}
                 >
                   {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                   {Math.abs(s.delta).toFixed(1)}%
@@ -487,7 +520,7 @@ export default function DashboardPage() {
 
         <section className="panel dashboard__outcomes">
           <div className="dashboard__panel-head">
-            <h2 className="dashboard__panel-title">نتائج المكالمات</h2>
+            <h2 className="dashboard__panel-title">{t("dashboard.outcomesTitle")}</h2>
           </div>
           <div className="outcomes">
             <div className="outcomes__chart">
@@ -495,7 +528,7 @@ export default function DashboardPage() {
                 className="gauge"
                 viewBox="0 0 100 56"
                 role="img"
-                aria-label="توزيع نتائج المكالمات"
+                aria-label={t("dashboard.outcomesGaugeAria")}
               >
                 <path className="gauge__track" d={GAUGE_ARC} pathLength="100" />
                 {outcomeSegments.map((s) => (
@@ -513,7 +546,7 @@ export default function DashboardPage() {
                 <span className="outcomes__total-value">
                   {nf.format(totalOutcomes)}
                 </span>
-                <span className="outcomes__total-label">إجمالي المكالمات</span>
+                <span className="outcomes__total-label">{t("dashboard.totalCallsLabel")}</span>
               </div>
             </div>
 
@@ -521,7 +554,7 @@ export default function DashboardPage() {
               {outcomeSegments.map((s) => (
                 <li key={s.key} className="outcomes__item">
                   <span className={`outcomes__dot ${s.cls}`} />
-                  <span className="outcomes__label">{s.label}</span>
+                  <span className="outcomes__label">{t(s.labelKey)}</span>
                   <span className="outcomes__value">
                     {nf.format(s.value)}
                     <span className="outcomes__pct">{Math.round(s.pct)}%</span>
@@ -535,8 +568,8 @@ export default function DashboardPage() {
 
       <section className="panel dashboard__campaigns">
         <div className="dashboard__panel-head">
-          <h2 className="dashboard__panel-title">أداء الحملات</h2>
-          <span className="tag tag--muted">حسب عدد المكالمات</span>
+          <h2 className="dashboard__panel-title">{t("dashboard.campaignsPerfTitle")}</h2>
+          <span className="tag tag--muted">{t("dashboard.byCallsTag")}</span>
         </div>
         <ul className="camp-list">
           {campaignStats.map((c) => {
@@ -549,9 +582,9 @@ export default function DashboardPage() {
                 }`}
               >
                 <div className="camp-row__top">
-                  <span className="camp-row__name">{c.name}</span>
+                  <span className="camp-row__name">{campaignDisplayName(c.name)}</span>
                   <span className="camp-row__calls">
-                    {nf.format(c.calls)} مكالمة
+                    {nf.format(c.calls)} {t("dashboard.callsSuffix")}
                   </span>
                 </div>
                 <div className="camp-row__track">
@@ -561,8 +594,10 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="camp-row__meta">
-                  <span>{share}% من المكالمات</span>
-                  <span className="camp-row__rate">نسبة النجاح {c.rate}%</span>
+                  <span>{t("dashboard.shareOfCalls", { share })}</span>
+                  <span className="camp-row__rate">
+                    {t("dashboard.successRate", { rate: c.rate })}
+                  </span>
                 </div>
               </li>
             );

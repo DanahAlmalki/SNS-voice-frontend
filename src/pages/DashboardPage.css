@@ -23,11 +23,11 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* RTL cross-axis: flex-end pins the content to the visual left edge */
+  /* flex-end pins the content to the end edge in both RTL and LTR */
   align-items: flex-end;
   gap: var(--sp-6);
   min-width: 190px;
-  text-align: left;
+  text-align: end;
 }
 
 .hero__balance-label {

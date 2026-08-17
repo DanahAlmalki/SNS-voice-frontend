@@ -3,16 +3,17 @@ import { X, PhoneOff, Phone, Copy, Check, Mic, Loader2 } from "lucide-react";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { createCampaign } from "../lib/campaigns";
 import { startOutboundCall } from "../lib/outboundCall";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./CallModal.css";
 
-const STATE_LABEL = {
-  idle: "جاهز",
-  listening: "يستمع…",
-  user_speaking: "أنت تتحدث…",
-  processing_stt: "يحلّل كلامك…",
-  thinking_llm: "يفكّر…",
-  speaking_tts: "الوكيل يتحدث…",
-  interrupted: "تمت المقاطعة",
+const STATE_LABEL_KEY = {
+  idle: "callModal.stateIdle",
+  listening: "callModal.stateListening",
+  user_speaking: "callModal.stateUserSpeaking",
+  processing_stt: "callModal.stateProcessingStt",
+  thinking_llm: "callModal.stateThinkingLlm",
+  speaking_tts: "callModal.stateSpeakingTts",
+  interrupted: "callModal.stateInterrupted",
 };
 
 export default function CallModal({
@@ -27,6 +28,7 @@ export default function CallModal({
   mode = "browser",
 }) {
   const isPhoneMode = mode === "phone";
+  const { t, dir } = useLanguage();
   const [tab, setTab] = useState(isPhoneMode ? "phone" : "call");
   const [copied, setCopied] = useState(false);
   const [setupError, setSetupError] = useState(null);
@@ -52,7 +54,7 @@ export default function CallModal({
           setCampaignId(id);
           if (!isPhoneMode) start(id);
         })
-        .catch((err) => setSetupError(err.message || "تعذّر بدء المكالمة"));
+        .catch((err) => setSetupError(err.message || t("callModal.setupError")));
     }
     if (!open && started.current) {
       started.current = false;
@@ -100,7 +102,7 @@ export default function CallModal({
       const result = await startOutboundCall({ to: phone, campaignId });
       setCallResult(result);
     } catch (err) {
-      setCallError(err.message || "تعذّر بدء الاتصال الحقيقي");
+      setCallError(err.message || t("callModal.realCallError"));
     } finally {
       setCallSubmitting(false);
     }
@@ -124,7 +126,7 @@ export default function CallModal({
         className="call-modal"
         role="dialog"
         aria-modal="true"
-        dir="rtl"
+        dir={dir}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="call-modal__head">
@@ -134,27 +136,27 @@ export default function CallModal({
                 className={`call-tab ${tab === "phone" ? "is-active" : ""}`}
                 onClick={() => setTab("phone")}
               >
-                اتصال حقيقي
+                {t("callModal.tabPhone")}
               </button>
             ) : (
               <button
                 className={`call-tab ${tab === "call" ? "is-active" : ""}`}
                 onClick={() => setTab("call")}
               >
-                المكالمة
+                {t("callModal.tabCall")}
               </button>
             )}
             <button
               className={`call-tab ${tab === "prompt" ? "is-active" : ""}`}
               onClick={() => setTab("prompt")}
             >
-              المطالبة
+              {t("callModal.tabPrompt")}
             </button>
           </div>
           <button
             className="modal__close"
             onClick={handleEnd}
-            aria-label="إغلاق"
+            aria-label={t("callModal.close")}
           >
             <X size={18} />
           </button>
@@ -183,15 +185,15 @@ export default function CallModal({
                   : error
                     ? error
                     : connected
-                      ? (STATE_LABEL[state] ?? state)
-                      : "جارٍ الاتصال…"}
+                      ? t(STATE_LABEL_KEY[state] ?? "") || state
+                      : t("callModal.callingBtn")}
               </p>
             </div>
 
             <div className="call-chat">
               {messages.length === 0 && !error && !setupError && (
                 <p className="muted call-chat__empty">
-                  ابدأ بالتحدث وسيظهر الحوار هنا.
+                  {t("callModal.startTalking")}
                 </p>
               )}
               {messages.map((m, i) => (
@@ -203,7 +205,7 @@ export default function CallModal({
             </div>
 
             <footer className="call-modal__foot">
-              <span className="mic-meter" title="مستوى الصوت">
+              <span className="mic-meter" title={t("callModal.micLevel")}>
                 <Mic size={14} />
                 <span className="mic-meter__bar">
                   <span
@@ -214,18 +216,15 @@ export default function CallModal({
               </span>
               <button className="btn btn--danger" onClick={handleEnd}>
                 <PhoneOff size={16} />
-                إنهاء المكالمة
+                {t("callModal.endCall")}
               </button>
             </footer>
           </div>
         ) : tab === "phone" ? (
           <div className="phone-view">
-            <p className="phone-view__intro">
-              أدخل رقم الجوال (مع رمز الدولة) لبدء مكالمة هاتفية حقيقية بهذا
-              القالب عبر تويليو.
-            </p>
+            <p className="phone-view__intro">{t("callModal.phoneIntro")}</p>
             <label className="phone-field">
-              <span className="phone-field__label">رقم الجوال</span>
+              <span className="phone-field__label">{t("callModal.phoneLabel")}</span>
               <input
                 type="tel"
                 dir="ltr"
@@ -236,7 +235,7 @@ export default function CallModal({
               />
             </label>
             {!campaignId && !setupError && (
-              <p className="muted phone-view__hint">جارٍ تجهيز القالب…</p>
+              <p className="muted phone-view__hint">{t("callModal.preparingTemplate")}</p>
             )}
             {(setupError || callError) && (
               <p className="phone-view__msg phone-view__msg--err">
@@ -245,7 +244,10 @@ export default function CallModal({
             )}
             {callResult && (
               <p className="phone-view__msg phone-view__msg--ok">
-                تم بدء الاتصال ✓ ({callResult.call_sid}، {callResult.status})
+                {t("callModal.callSuccess", {
+                  sid: callResult.call_sid,
+                  status: callResult.status,
+                })}
               </p>
             )}
             <footer className="call-modal__foot">
@@ -259,7 +261,7 @@ export default function CallModal({
                 ) : (
                   <Phone size={16} />
                 )}
-                {callSubmitting ? "جارٍ الاتصال…" : "اتصال"}
+                {callSubmitting ? t("callModal.callingBtn") : t("callModal.callBtn")}
               </button>
             </footer>
           </div>
@@ -271,7 +273,7 @@ export default function CallModal({
             <footer className="call-modal__foot">
               <button className="btn btn--subtle" onClick={copy}>
                 {copied ? <Check size={16} /> : <Copy size={16} />}
-                {copied ? "تم النسخ" : "نسخ"}
+                {copied ? t("promptModal.copied") : t("promptModal.copy")}
               </button>
             </footer>
           </div>

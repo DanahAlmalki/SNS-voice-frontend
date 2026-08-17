@@ -9,8 +9,10 @@ import NewCampaignPage from "./pages/NewCampaignPage.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import TemplateWizard from "./TemplateWizard.jsx";
+import { LanguageProvider, useLanguage } from "./lib/i18n.jsx";
 
-export default function App() {
+function AppRoutes() {
+  const { t } = useLanguage();
   return (
     <BrowserRouter>
       <Routes>
@@ -25,18 +27,27 @@ export default function App() {
           <Route path="/templates/:id/edit" element={<TemplateWizard />} />
           <Route
             path="/records"
-            element={<Placeholder title="السجلات" icon={ClipboardList} />}
+            element={<Placeholder title={t("app.records")} icon={ClipboardList} />}
           />
           <Route
             path="/settings"
-            element={<Placeholder title="الإعدادات" icon={Settings} />}
+            element={<Placeholder title={t("app.settings")} icon={Settings} />}
           />
           <Route
             path="/help"
-            element={<Placeholder title="المساعدة" icon={CircleHelp} />}
+            element={<Placeholder title={t("app.help")} icon={CircleHelp} />}
           />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppRoutes />
+    </LanguageProvider>
+  );
+}
+

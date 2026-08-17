@@ -1,25 +1,27 @@
 import { useMemo, useState } from "react";
 import { LayoutTemplate, Users, Megaphone } from "lucide-react";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./CampaignMapPage.css";
 
 /* ---------- Demo data ---------- */
 const TEMPLATES = [
-  { id: "t1", name: "حجز المواعيد" },
-  { id: "t2", name: "تأهيل العملاء" },
-  { id: "t3", name: "متابعة الطلبات" },
+  { id: "t1", name: "حجز المواعيد", nameEn: "Appointment Booking" },
+  { id: "t2", name: "تأهيل العملاء", nameEn: "Lead Qualification" },
+  { id: "t3", name: "متابعة الطلبات", nameEn: "Order Follow-up" },
 ];
 
 const AUDIENCES = [
-  { id: "a1", name: "عملاء الرياض ٢٠٢٦", size: 1240 },
-  { id: "a2", name: "قائمة المهتمين", size: 860 },
-  { id: "a3", name: "العملاء الجدد", size: 430 },
-  { id: "a4", name: "قاعدة العملاء الكاملة", size: 2100 },
+  { id: "a1", name: "عملاء الرياض ٢٠٢٦", nameEn: "Riyadh Customers 2026", size: 1240 },
+  { id: "a2", name: "قائمة المهتمين", nameEn: "Interested Leads List", size: 860 },
+  { id: "a3", name: "العملاء الجدد", nameEn: "New Customers", size: 430 },
+  { id: "a4", name: "قاعدة العملاء الكاملة", nameEn: "Full Customer Base", size: 2100 },
 ];
 
 const CAMPAIGNS = [
   {
     id: "c1",
     name: "حجز المواعيد - الربع الثالث",
+    nameEn: "Appointment Booking - Q3",
     template: "t1",
     audience: "a1",
     status: "in_progress",
@@ -27,6 +29,7 @@ const CAMPAIGNS = [
   {
     id: "c2",
     name: "تأهيل العملاء المحتملين",
+    nameEn: "Lead Qualification",
     template: "t2",
     audience: "a2",
     status: "completed",
@@ -34,6 +37,7 @@ const CAMPAIGNS = [
   {
     id: "c3",
     name: "متابعة العملاء الجدد",
+    nameEn: "New Customer Follow-up",
     template: "t3",
     audience: "a3",
     status: "not_started",
@@ -41,6 +45,7 @@ const CAMPAIGNS = [
   {
     id: "c4",
     name: "استطلاع رضا العملاء",
+    nameEn: "Customer Satisfaction Survey",
     template: "t3",
     audience: "a4",
     status: "in_progress",
@@ -48,6 +53,7 @@ const CAMPAIGNS = [
   {
     id: "c5",
     name: "إعادة استهداف المهتمين",
+    nameEn: "Re-targeting Interested Leads",
     template: "t1",
     audience: "a2",
     status: "not_started",
@@ -55,9 +61,9 @@ const CAMPAIGNS = [
 ];
 
 const STATUS = {
-  completed: { label: "مكتملة", cls: "cmap-badge--completed" },
-  in_progress: { label: "قيد التنفيذ", cls: "cmap-badge--progress" },
-  not_started: { label: "لم تبدأ", cls: "cmap-badge--pending" },
+  completed: { labelKey: "campaignMap.statusCompleted", cls: "cmap-badge--completed" },
+  in_progress: { labelKey: "campaignMap.statusInProgress", cls: "cmap-badge--progress" },
+  not_started: { labelKey: "campaignMap.statusNotStarted", cls: "cmap-badge--pending" },
 };
 
 /* ---------- Layout constants (LTR canvas coordinates) ---------- */
@@ -88,6 +94,8 @@ function edgePath(x1, y1, x2, y2) {
 
 export default function CampaignMapPage() {
   const [hovered, setHovered] = useState(null);
+  const { t, lang, dir } = useLanguage();
+  const isEn = lang === "en";
 
   const { nodes, edges, canvasW, canvasH } = useMemo(() => {
     const rows = Math.max(TEMPLATES.length, CAMPAIGNS.length, AUDIENCES.length);
@@ -155,20 +163,20 @@ export default function CampaignMapPage() {
     <div className="cmap">
       <header className="cmap__header">
         <div className="cmap__heading">
-          <h1 className="cmap__title">خريطة الحملات</h1>
+          <h1 className="cmap__title">{t("campaignMap.title")}</h1>
         </div>
         <ul className="cmap__legend">
           <li>
             <span className="cmap__dot cmap__dot--template" />
-            القوالب
+            {t("campaignMap.legendTemplates")}
           </li>
           <li>
             <span className="cmap__dot cmap__dot--campaign" />
-            الحملات
+            {t("campaignMap.legendCampaigns")}
           </li>
           <li>
             <span className="cmap__dot cmap__dot--audience" />
-            ملفات الجمهور
+            {t("campaignMap.legendAudiences")}
           </li>
         </ul>
       </header>
@@ -183,19 +191,19 @@ export default function CampaignMapPage() {
             className="cmap__col-label"
             style={{ left: COL_X[0], width: NODE_W }}
           >
-            القوالب
+            {t("campaignMap.legendTemplates")}
           </div>
           <div
             className="cmap__col-label"
             style={{ left: COL_X[1], width: NODE_W }}
           >
-            الحملات
+            {t("campaignMap.legendCampaigns")}
           </div>
           <div
             className="cmap__col-label"
             style={{ left: COL_X[2], width: NODE_W }}
           >
-            ملفات الجمهور
+            {t("campaignMap.legendAudiences")}
           </div>
 
           <svg className="cmap__edges" width={canvasW} height={canvasH}>
@@ -216,8 +224,10 @@ export default function CampaignMapPage() {
               node={n}
               type="template"
               icon={LayoutTemplate}
-              meta={`${templateUsage(n.id)} حملة`}
+              meta={`${templateUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
               dim={isDim(n.id)}
+              lang={lang}
+              dir={dir}
               onEnter={() => setHovered(n.id)}
               onLeave={() => setHovered(null)}
             />
@@ -229,8 +239,10 @@ export default function CampaignMapPage() {
               node={n}
               type="campaign"
               icon={Megaphone}
-              badge={STATUS[n.status]}
+              badge={{ label: t(STATUS[n.status].labelKey), cls: STATUS[n.status].cls }}
               dim={isDim(n.id)}
+              lang={lang}
+              dir={dir}
               onEnter={() => setHovered(n.id)}
               onLeave={() => setHovered(null)}
             />
@@ -242,10 +254,12 @@ export default function CampaignMapPage() {
               node={n}
               type="audience"
               icon={Users}
-              meta={`${n.size.toLocaleString("ar-EG")} جهة · ${audienceUsage(
-                n.id,
-              )} حملة`}
+              meta={`${n.size.toLocaleString(isEn ? "en-US" : "ar-EG")} ${t(
+                "campaignMap.contactsWord",
+              )} · ${audienceUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
               dim={isDim(n.id)}
+              lang={lang}
+              dir={dir}
               onEnter={() => setHovered(n.id)}
               onLeave={() => setHovered(null)}
             />
@@ -263,6 +277,8 @@ function MapNode({
   meta,
   badge,
   dim,
+  lang,
+  dir,
   onEnter,
   onLeave,
 }) {
@@ -276,8 +292,10 @@ function MapNode({
       <span className="cmap-node__icon">
         <Icon size={18} />
       </span>
-      <div className="cmap-node__body" dir="rtl">
-        <span className="cmap-node__name">{node.name}</span>
+      <div className="cmap-node__body" dir={dir}>
+        <span className="cmap-node__name">
+          {lang === "en" && node.nameEn ? node.nameEn : node.name}
+        </span>
         {badge ? (
           <span className={`cmap-badge ${badge.cls}`}>{badge.label}</span>
         ) : (

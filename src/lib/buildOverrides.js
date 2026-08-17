@@ -3,13 +3,26 @@
 // 0/1-for-booleans are all rejected with a 400, so blank fields are dropped.
 
 // Preset keys accepted by the backend voice registry.
+// `label`/`hint` are Arabic (default/backward-compatible); `labelEn`/`hintEn`
+// are used when the UI language toggle is set to English — see voiceLabel()/
+// voiceHint() below.
 export const VOICE_PRESETS = [
-  { id: "salwa", label: "سلوى", hint: "نسائي" },
-  { id: "silma", label: "سلمى", hint: "نسائي" },
-  { id: "fahad", label: "فهد", hint: "رجالي" },
-  { id: "sultan", label: "سلطان", hint: "رجالي" },
-  { id: "salim", label: "سالم", hint: "رجالي" },
+  { id: "salwa", label: "سلوى", labelEn: "Salwa", hint: "نسائي", hintEn: "Female" },
+  { id: "silma", label: "سلمى", labelEn: "Salma", hint: "نسائي", hintEn: "Female" },
+  { id: "fahad", label: "فهد", labelEn: "Fahad", hint: "رجالي", hintEn: "Male" },
+  { id: "sultan", label: "سلطان", labelEn: "Sultan", hint: "رجالي", hintEn: "Male" },
+  { id: "salim", label: "سالم", labelEn: "Saleem", hint: "رجالي", hintEn: "Male" },
 ];
+
+export function voiceLabel(voice, lang) {
+  if (!voice) return "";
+  return (lang === "en" ? voice.labelEn : voice.label) || voice.label;
+}
+
+export function voiceHint(voice, lang) {
+  if (!voice) return "";
+  return (lang === "en" ? voice.hintEn : voice.hint) || voice.hint;
+}
 
 const SPEED_MAP = { slow: 0.85, normal: 1.0, fast: 1.15 };
 

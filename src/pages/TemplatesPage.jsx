@@ -11,38 +11,43 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { listTemplates, describeTemplate, deleteTemplate } from "../lib/templates";
+import { useLanguage } from "../lib/i18n.jsx";
 import "./TemplatesPage.css";
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState(() =>
-    listTemplates().map(describeTemplate),
-  );
+  const { t, lang } = useLanguage();
+  const [templates, setTemplates] = useState(() => listTemplates());
   const [query, setQuery] = useState("");
   const [objective, setObjective] = useState("all");
   const [voice, setVoice] = useState("all");
 
+  const described = useMemo(
+    () => templates.map((record) => describeTemplate(record, lang)),
+    [templates, lang],
+  );
+
   const objectives = useMemo(
-    () => [...new Set(templates.map((t) => t.objective))],
-    [templates],
+    () => [...new Set(described.map((tpl) => tpl.objective))],
+    [described],
   );
   const voices = useMemo(
-    () => [...new Set(templates.map((t) => t.voice))],
-    [templates],
+    () => [...new Set(described.map((tpl) => tpl.voice))],
+    [described],
   );
 
   const filtered = useMemo(
     () =>
-      templates.filter((t) => {
-        const matchesQuery = t.name
+      described.filter((tpl) => {
+        const matchesQuery = tpl.name
           .toLowerCase()
           .includes(query.trim().toLowerCase());
         const matchesObjective =
-          objective === "all" || t.objective === objective;
-        const matchesVoice = voice === "all" || t.voice === voice;
+          objective === "all" || tpl.objective === objective;
+        const matchesVoice = voice === "all" || tpl.voice === voice;
         return matchesQuery && matchesObjective && matchesVoice;
       }),
-    [templates, query, objective, voice],
+    [described, query, objective, voice],
   );
 
   const resetFilters = () => {
@@ -51,24 +56,25 @@ export default function TemplatesPage() {
     setVoice("all");
   };
 
-  const handleDelete = (t) => {
-    if (!window.confirm(`حذف قالب "${t.name}"؟ لا يمكن التراجع عن ذلك.`)) return;
-    deleteTemplate(t.id);
-    setTemplates((list) => list.filter((x) => x.id !== t.id));
+  const handleDelete = (tpl) => {
+    if (!window.confirm(t("templatesPage.confirmDelete", { name: tpl.name })))
+      return;
+    deleteTemplate(tpl.id);
+    setTemplates((list) => list.filter((x) => x.id !== tpl.id));
   };
 
   return (
     <div className="templates">
       <header className="templates__header">
         <div className="templates__heading">
-          <h1 className="templates__title">القوالب</h1>
+          <h1 className="templates__title">{t("templatesPage.title")}</h1>
         </div>
         <button
           className="btn btn--primary"
           onClick={() => navigate("/templates/new")}
         >
           <Plus size={18} />
-          قالب جديد
+          {t("templatesPage.newTemplate")}
         </button>
       </header>
 
@@ -79,7 +85,7 @@ export default function TemplatesPage() {
             <input
               id="template-search"
               type="search"
-              placeholder="ابحث باسم القالب…"
+              placeholder={t("templatesPage.searchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -92,7 +98,7 @@ export default function TemplatesPage() {
             value={objective}
             onChange={(e) => setObjective(e.target.value)}
           >
-            <option value="all">كل الأهداف</option>
+            <option value="all">{t("templatesPage.allObjectives")}</option>
             {objectives.map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -107,7 +113,7 @@ export default function TemplatesPage() {
             value={voice}
             onChange={(e) => setVoice(e.target.value)}
           >
-            <option value="all">كل الأصوات</option>
+            <option value="all">{t("templatesPage.allVoices")}</option>
             {voices.map((v) => (
               <option key={v} value={v}>
                 {v}
@@ -118,46 +124,47 @@ export default function TemplatesPage() {
 
         <button className="btn btn--ghost" onClick={resetFilters}>
           <RotateCcw size={16} />
-          إعادة تعيين
+          {t("templatesPage.resetFilters")}
         </button>
       </section>
 
       <div className="templates__grid">
-        {filtered.map((t) => (
-          <article className="tpl-card" key={t.id}>
+        {filtered.map((tpl) => (
+          <article className="tpl-card" key={tpl.id}>
             <div className="tpl-card__body">
-              <h3 className="tpl-card__name">{t.name}</h3>
-              <p className="tpl-card__desc">{t.description}</p>
+              <h3 className="tpl-card__name">{tpl.name}</h3>
+              <p className="tpl-card__desc">{tpl.description}</p>
               <div className="tpl-card__meta">
                 <span className="tag">
                   <Target size={13} />
-                  {t.objective}
+                  {tpl.objective}
                 </span>
                 <span className="tag tag--muted">
                   <AudioLines size={13} />
-                  {t.voice}
+                  {tpl.voice}
                 </span>
               </div>
               <span className="tpl-card__updated">
                 <Clock size={13} />
-                آخر تحديث: {t.updated}
+                {t("templatesPage.lastUpdated")}
+                {tpl.updated}
               </span>
             </div>
 
             <div className="tpl-card__footer">
               <button
                 className="btn btn--ghost btn--sm"
-                onClick={() => navigate(`/templates/${t.id}/edit`)}
+                onClick={() => navigate(`/templates/${tpl.id}/edit`)}
               >
                 <Pencil size={16} />
-                تعديل
+                {t("templatesPage.edit")}
               </button>
               <button
                 className="btn btn--danger btn--sm"
-                onClick={() => handleDelete(t)}
+                onClick={() => handleDelete(tpl)}
               >
                 <Trash2 size={16} />
-                حذف
+                {t("templatesPage.delete")}
               </button>
             </div>
           </article>
@@ -165,8 +172,9 @@ export default function TemplatesPage() {
       </div>
 
       {filtered.length === 0 && (
-        <p className="templates__empty">لا توجد قوالب مطابقة للبحث.</p>
+        <p className="templates__empty">{t("templatesPage.empty")}</p>
       )}
     </div>
   );
 }
+
