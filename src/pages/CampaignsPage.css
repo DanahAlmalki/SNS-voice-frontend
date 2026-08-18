@@ -98,6 +98,14 @@
   padding: var(--sp-8);
   text-align: center;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.campaigns__empty--error {
+  color: var(--danger);
 }
 
 /* ---------- Status badges ---------- */

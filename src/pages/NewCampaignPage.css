@@ -46,6 +46,22 @@
   color: var(--text);
 }
 
+/* ---------- Inline validation / submit error ---------- */
+.nc-msg {
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+}
+.nc-msg--err {
+  background: var(--danger-weak);
+  color: var(--danger-hover);
+}
+.nc-fields a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* ---------- Two-column split (right: import, left: config) ---------- */
 .new-campaign__grid {
   display: grid;

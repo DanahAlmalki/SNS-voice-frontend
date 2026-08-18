@@ -33,6 +33,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           configure: attachAuth,
         },
+        // -> pipecat_server.py's POST /api/v1/audiences (same backend/key as campaigns).
+        "/api/v1/audiences": {
+          target,
+          changeOrigin: true,
+          configure: attachAuth,
+        },
         // -> twilio_bridge.py's POST /outbound-call (real phone call).
         "/api/v1/outbound-call": {
           target: bridgeTarget,

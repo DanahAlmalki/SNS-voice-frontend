@@ -1,21 +1,31 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowLeft,
   UploadCloud,
   FilePlus2,
   FileSpreadsheet,
+  FileText,
   X,
   Filter,
   CalendarClock,
   Gauge,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
+import { createCampaign } from "../lib/campaigns";
+import { uploadAudience } from "../lib/audiences";
+import { listTemplates, findTemplate, describeTemplate } from "../lib/templates";
+import { buildPrompt } from "../lib/buildPrompt";
+import { buildOverrides } from "../lib/buildOverrides";
 import "./NewCampaignPage.css";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
+
+// Maps the scheduling select's demo-city values onto real IANA timezones.
+const TZ_MAP = { riyadh: "Asia/Riyadh", cairo: "Africa/Cairo", dubai: "Asia/Dubai" };
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -28,13 +38,36 @@ export default function NewCampaignPage() {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [files, setFiles] = useState([]);
-  const { t, dir } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const BackIcon = dir === "rtl" ? ArrowRight : ArrowLeft;
+
+  const [templates] = useState(() => listTemplates());
+  const [form, setForm] = useState({
+    name: "",
+    templateId: "",
+    timezone: "riyadh",
+    windowStart: "09:00",
+    windowEnd: "18:00",
+    excludeHolidays: true,
+    concurrentCalls: "50",
+    hourlyMax: "500",
+    carrierCapacity: "auto",
+    retryInterval: "30",
+    retryMax: "3",
+    fallbackTransfer: true,
+  });
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const [fieldError, setFieldError] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState("campaign");
 
   const addFiles = (fileList) => {
     const incoming = Array.from(fileList);
     if (incoming.length === 0) return;
-    setFiles((prev) => [...prev, ...incoming]);
+    // Only one audience file is supported per campaign right now.
+    setFiles([incoming[0]]);
   };
 
   const handleDrop = (e) => {
@@ -46,12 +79,72 @@ export default function NewCampaignPage() {
   const removeFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
+  const handleCreate = async () => {
+    setFieldError(null);
+    setSubmitError(null);
+
+    const trimmedName = form.name.trim();
+    if (!trimmedName) {
+      setFieldError(t("newCampaign.nameRequired"));
+      return;
+    }
+    const record = findTemplate(form.templateId);
+    if (!record) {
+      setFieldError(t("newCampaign.templateRequired"));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      let audienceId;
+      if (files[0]) {
+        setSubmitPhase("audience");
+        const uploaded = await uploadAudience(files[0]);
+        audienceId = uploaded.id;
+      }
+
+      setSubmitPhase("campaign");
+      const tplData = record.data || {};
+      await createCampaign({
+        name: trimmedName,
+        prompt: buildPrompt(tplData),
+        greeting: tplData.opening,
+        overrides: buildOverrides(tplData),
+        objective: tplData.objective,
+        audienceId,
+        schedule: {
+          timezone: TZ_MAP[form.timezone] ?? form.timezone,
+          window_start: form.windowStart,
+          window_end: form.windowEnd,
+          exclude_holidays: form.excludeHolidays,
+        },
+        rateLimits: {
+          max_concurrent_calls: Number(form.concurrentCalls),
+          max_calls_per_hour: Number(form.hourlyMax),
+          carrier_capacity: form.carrierCapacity,
+        },
+        retry: {
+          interval_minutes: Number(form.retryInterval),
+          max_attempts: Number(form.retryMax),
+          fallback_transfer: form.fallbackTransfer,
+        },
+      });
+
+      navigate("/campaigns");
+    } catch (err) {
+      setSubmitError(err.message || t("newCampaign.createError"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="new-campaign" dir={dir}>
       <header className="new-campaign__header">
         <button
           className="new-campaign__back"
           onClick={() => navigate("/campaigns")}
+          disabled={submitting}
         >
           <BackIcon size={16} />
           {t("newCampaign.back")}
@@ -63,14 +156,28 @@ export default function NewCampaignPage() {
           <button
             className="btn btn--ghost"
             onClick={() => navigate("/campaigns")}
+            disabled={submitting}
           >
             {t("newCampaign.cancel")}
           </button>
-          <button className="btn btn--primary">
-            {t("newCampaign.createCampaign")}
+          <button
+            className="btn btn--primary"
+            onClick={handleCreate}
+            disabled={submitting || templates.length === 0}
+          >
+            {submitting ? <Loader2 className="spin" size={16} /> : null}
+            {submitting
+              ? submitPhase === "audience"
+                ? t("newCampaign.uploadingAudience")
+                : t("newCampaign.creating")
+              : t("newCampaign.createCampaign")}
           </button>
         </div>
       </header>
+
+      {(fieldError || submitError) && (
+        <p className="nc-msg nc-msg--err">{fieldError || submitError}</p>
+      )}
 
       <div className="new-campaign__grid">
         {/* ---------- Right: Audience import ---------- */}
@@ -113,7 +220,6 @@ export default function NewCampaignPage() {
               ref={inputRef}
               type="file"
               accept={ACCEPTED}
-              multiple
               hidden
               onChange={(e) => addFiles(e.target.files)}
             />
@@ -187,6 +293,57 @@ export default function NewCampaignPage() {
         <section className="nc-col nc-config">
           <div className="panel nc-card">
             <div className="nc-card__head">
+              <FileText size={18} className="nc-card__icon" />
+              <div>
+                <h3 className="nc-card__title">{t("newCampaign.detailsTitle")}</h3>
+                <p className="nc-card__desc">{t("newCampaign.detailsDesc")}</p>
+              </div>
+            </div>
+            <div className="nc-fields">
+              <div className="filter-field filter-field--grow">
+                <label className="filter-label" htmlFor="camp-name">
+                  {t("newCampaign.nameLabel")}
+                </label>
+                <input
+                  id="camp-name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => set({ name: e.target.value })}
+                  placeholder={t("newCampaign.namePlaceholder")}
+                  disabled={submitting}
+                />
+              </div>
+              <div className="filter-field filter-field--grow">
+                <label className="filter-label" htmlFor="camp-template">
+                  {t("newCampaign.templateLabel")}
+                </label>
+                <select
+                  id="camp-template"
+                  value={form.templateId}
+                  onChange={(e) => set({ templateId: e.target.value })}
+                  disabled={submitting}
+                >
+                  <option value="">{t("newCampaign.selectTemplate")}</option>
+                  {templates.map((record) => (
+                    <option key={record.id} value={record.id}>
+                      {describeTemplate(record, lang).name}
+                    </option>
+                  ))}
+                </select>
+                {templates.length === 0 && (
+                  <p className="muted">
+                    {t("newCampaign.noTemplates")}{" "}
+                    <Link to="/templates/new">
+                      {t("newCampaign.createTemplateLink")}
+                    </Link>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="panel nc-card">
+            <div className="nc-card__head">
               <CalendarClock size={18} className="nc-card__icon" />
               <div>
                 <h3 className="nc-card__title">{t("newCampaign.schedulingTitle")}</h3>
@@ -198,7 +355,11 @@ export default function NewCampaignPage() {
                 <label className="filter-label" htmlFor="sch-tz">
                   {t("newCampaign.timezoneLabel")}
                 </label>
-                <select id="sch-tz" defaultValue="riyadh">
+                <select
+                  id="sch-tz"
+                  value={form.timezone}
+                  onChange={(e) => set({ timezone: e.target.value })}
+                >
                   <option value="riyadh">{t("newCampaign.tzRiyadh")}</option>
                   <option value="cairo">{t("newCampaign.tzCairo")}</option>
                   <option value="dubai">{t("newCampaign.tzDubai")}</option>
@@ -208,16 +369,30 @@ export default function NewCampaignPage() {
                 <label className="filter-label" htmlFor="sch-from">
                   {t("newCampaign.windowStartLabel")}
                 </label>
-                <input id="sch-from" type="time" defaultValue="09:00" />
+                <input
+                  id="sch-from"
+                  type="time"
+                  value={form.windowStart}
+                  onChange={(e) => set({ windowStart: e.target.value })}
+                />
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="sch-to">
                   {t("newCampaign.windowEndLabel")}
                 </label>
-                <input id="sch-to" type="time" defaultValue="18:00" />
+                <input
+                  id="sch-to"
+                  type="time"
+                  value={form.windowEnd}
+                  onChange={(e) => set({ windowEnd: e.target.value })}
+                />
               </div>
               <label className="nc-check">
-                <input type="checkbox" defaultChecked />
+                <input
+                  type="checkbox"
+                  checked={form.excludeHolidays}
+                  onChange={(e) => set({ excludeHolidays: e.target.checked })}
+                />
                 <span>{t("newCampaign.excludeHolidays")}</span>
               </label>
             </div>
@@ -240,7 +415,8 @@ export default function NewCampaignPage() {
                   id="thr-concurrent"
                   type="number"
                   min="1"
-                  defaultValue="50"
+                  value={form.concurrentCalls}
+                  onChange={(e) => set({ concurrentCalls: e.target.value })}
                 />
               </div>
               <div className="filter-field">
@@ -251,14 +427,19 @@ export default function NewCampaignPage() {
                   id="thr-hourly"
                   type="number"
                   min="1"
-                  defaultValue="500"
+                  value={form.hourlyMax}
+                  onChange={(e) => set({ hourlyMax: e.target.value })}
                 />
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="thr-carrier">
                   {t("newCampaign.carrierCapacityLabel")}
                 </label>
-                <select id="thr-carrier" defaultValue="auto">
+                <select
+                  id="thr-carrier"
+                  value={form.carrierCapacity}
+                  onChange={(e) => set({ carrierCapacity: e.target.value })}
+                >
                   <option value="auto">{t("newCampaign.capacityAuto")}</option>
                   <option value="low">{t("newCampaign.capacityLow")}</option>
                   <option value="high">{t("newCampaign.capacityHigh")}</option>
@@ -284,17 +465,28 @@ export default function NewCampaignPage() {
                   id="retry-interval"
                   type="number"
                   min="1"
-                  defaultValue="30"
+                  value={form.retryInterval}
+                  onChange={(e) => set({ retryInterval: e.target.value })}
                 />
               </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="retry-max">
                   {t("newCampaign.retryMaxLabel")}
                 </label>
-                <input id="retry-max" type="number" min="1" defaultValue="3" />
+                <input
+                  id="retry-max"
+                  type="number"
+                  min="1"
+                  value={form.retryMax}
+                  onChange={(e) => set({ retryMax: e.target.value })}
+                />
               </div>
               <label className="nc-check">
-                <input type="checkbox" defaultChecked />
+                <input
+                  type="checkbox"
+                  checked={form.fallbackTransfer}
+                  onChange={(e) => set({ fallbackTransfer: e.target.checked })}
+                />
                 <span>{t("newCampaign.fallbackTransfer")}</span>
               </label>
             </div>
@@ -304,4 +496,5 @@ export default function NewCampaignPage() {
     </div>
   );
 }
+
 

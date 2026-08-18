@@ -286,6 +286,15 @@ textarea {
   font-size: var(--fs-sm);
 }
 
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Panel (full-width sections, 20px radius) ---------- */
 .panel {
   background: var(--surface);
