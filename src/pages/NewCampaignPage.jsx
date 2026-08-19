@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowLeft,
@@ -15,9 +15,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { createCampaign } from "../lib/campaigns";
+import { createCampaign, getCampaign, updateCampaign } from "../lib/campaigns";
 import { uploadAudience } from "../lib/audiences";
 import { listTemplates, findTemplate, describeTemplate } from "../lib/templates";
+import { OBJECTIVES } from "../lib/objectives";
 import { buildPrompt } from "../lib/buildPrompt";
 import { buildOverrides } from "../lib/buildOverrides";
 import "./NewCampaignPage.css";
@@ -26,6 +27,9 @@ const ACCEPTED = ".csv,.xlsx,.xls";
 
 // Maps the scheduling select's demo-city values onto real IANA timezones.
 const TZ_MAP = { riyadh: "Asia/Riyadh", cairo: "Africa/Cairo", dubai: "Asia/Dubai" };
+const TZ_REVERSE = Object.fromEntries(
+  Object.entries(TZ_MAP).map(([key, value]) => [value, key]),
+);
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -35,6 +39,8 @@ function formatSize(bytes) {
 
 export default function NewCampaignPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [files, setFiles] = useState([]);
@@ -58,10 +64,67 @@ export default function NewCampaignPage() {
   });
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+  // Existing prompt/greeting/overrides/objective from GET — kept as-is on
+  // save unless the user explicitly picks a different template below.
+  const [baseFields, setBaseFields] = useState(null);
+  const [loadingCampaign, setLoadingCampaign] = useState(isEdit);
+  const [loadError, setLoadError] = useState(null);
+
   const [fieldError, setFieldError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitPhase, setSubmitPhase] = useState("campaign");
+
+  const loadCampaign = useCallback(() => {
+    if (!isEdit) return;
+    setLoadingCampaign(true);
+    setLoadError(null);
+    getCampaign(id)
+      .then((data) => {
+        setBaseFields({
+          prompt: data.prompt ?? "",
+          greeting: data.greeting ?? "",
+          overrides: data.overrides ?? {},
+          objective: data.objective,
+        });
+        set({
+          name: data.name ?? "",
+          ...(data.schedule
+            ? {
+                timezone:
+                  TZ_REVERSE[data.schedule.timezone] ?? data.schedule.timezone,
+                windowStart: data.schedule.window_start ?? "09:00",
+                windowEnd: data.schedule.window_end ?? "18:00",
+                excludeHolidays: data.schedule.exclude_holidays ?? true,
+              }
+            : {}),
+          ...(data.rate_limits
+            ? {
+                concurrentCalls: String(
+                  data.rate_limits.max_concurrent_calls ?? "50",
+                ),
+                hourlyMax: String(data.rate_limits.max_calls_per_hour ?? "500"),
+                carrierCapacity: data.rate_limits.carrier_capacity ?? "auto",
+              }
+            : {}),
+          ...(data.retry
+            ? {
+                retryInterval: String(data.retry.interval_minutes ?? "30"),
+                retryMax: String(data.retry.max_attempts ?? "3"),
+                fallbackTransfer: data.retry.fallback_transfer ?? true,
+              }
+            : {}),
+        });
+      })
+      .catch((err) => setLoadError(err.message || t("newCampaign.loadError")))
+      .finally(() => setLoadingCampaign(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEdit]);
+
+  useEffect(() => {
+    loadCampaign();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addFiles = (fileList) => {
     const incoming = Array.from(fileList);
@@ -79,7 +142,7 @@ export default function NewCampaignPage() {
   const removeFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     setFieldError(null);
     setSubmitError(null);
 
@@ -88,8 +151,8 @@ export default function NewCampaignPage() {
       setFieldError(t("newCampaign.nameRequired"));
       return;
     }
-    const record = findTemplate(form.templateId);
-    if (!record) {
+    const record = form.templateId ? findTemplate(form.templateId) : null;
+    if (!isEdit && !record) {
       setFieldError(t("newCampaign.templateRequired"));
       return;
     }
@@ -104,13 +167,19 @@ export default function NewCampaignPage() {
       }
 
       setSubmitPhase("campaign");
-      const tplData = record.data || {};
-      await createCampaign({
+      const tplData = record ? record.data || {} : null;
+      // The backend's own "objective" enum never includes "other" (its GET
+      // fallback for campaigns saved without one) — resending it verbatim on
+      // PUT is rejected, so only carry it over when it's a real objective id.
+      const keptObjective = OBJECTIVES.some((o) => o.id === baseFields?.objective)
+        ? baseFields.objective
+        : undefined;
+      const payload = {
         name: trimmedName,
-        prompt: buildPrompt(tplData),
-        greeting: tplData.opening,
-        overrides: buildOverrides(tplData),
-        objective: tplData.objective,
+        prompt: tplData ? buildPrompt(tplData) : baseFields?.prompt,
+        greeting: tplData ? tplData.opening : baseFields?.greeting,
+        overrides: tplData ? buildOverrides(tplData) : baseFields?.overrides,
+        objective: tplData ? tplData.objective : keptObjective,
         audienceId,
         schedule: {
           timezone: TZ_MAP[form.timezone] ?? form.timezone,
@@ -128,7 +197,13 @@ export default function NewCampaignPage() {
           max_attempts: Number(form.retryMax),
           fallback_transfer: form.fallbackTransfer,
         },
-      });
+      };
+
+      if (isEdit) {
+        await updateCampaign(id, payload);
+      } else {
+        await createCampaign(payload);
+      }
 
       navigate("/campaigns");
     } catch (err) {
@@ -150,7 +225,9 @@ export default function NewCampaignPage() {
           {t("newCampaign.back")}
         </button>
         <div className="new-campaign__heading">
-          <h1 className="new-campaign__title">{t("newCampaign.title")}</h1>
+          <h1 className="new-campaign__title">
+            {t(isEdit ? "newCampaign.editTitle" : "newCampaign.title")}
+          </h1>
         </div>
         <div className="new-campaign__actions">
           <button
@@ -162,15 +239,17 @@ export default function NewCampaignPage() {
           </button>
           <button
             className="btn btn--primary"
-            onClick={handleCreate}
-            disabled={submitting || templates.length === 0}
+            onClick={handleSubmit}
+            disabled={
+              submitting || loadingCampaign || (!isEdit && templates.length === 0)
+            }
           >
             {submitting ? <Loader2 className="spin" size={16} /> : null}
             {submitting
               ? submitPhase === "audience"
                 ? t("newCampaign.uploadingAudience")
-                : t("newCampaign.creating")
-              : t("newCampaign.createCampaign")}
+                : t(isEdit ? "newCampaign.savingChanges" : "newCampaign.creating")
+              : t(isEdit ? "newCampaign.saveChanges" : "newCampaign.createCampaign")}
           </button>
         </div>
       </header>
@@ -179,6 +258,20 @@ export default function NewCampaignPage() {
         <p className="nc-msg nc-msg--err">{fieldError || submitError}</p>
       )}
 
+      {loadingCampaign ? (
+        <p className="nc-msg">
+          <Loader2 className="spin" size={16} />
+          {t("newCampaign.loading")}
+        </p>
+      ) : loadError ? (
+        <div className="nc-msg nc-msg--err">
+          <p>{loadError}</p>
+          <button className="btn btn--ghost btn--sm" onClick={loadCampaign}>
+            <RotateCcw size={14} />
+            {t("campaignsPage.retry")}
+          </button>
+        </div>
+      ) : (
       <div className="new-campaign__grid">
         {/* ---------- Right: Audience import ---------- */}
         <section className="panel nc-col nc-import">
@@ -205,6 +298,11 @@ export default function NewCampaignPage() {
             <UploadCloud className="nc-drop__icon" size={40} />
             <p className="nc-drop__title">{t("newCampaign.dropTitle")}</p>
             <p className="nc-drop__hint">{t("newCampaign.dropHint")}</p>
+            {isEdit && (
+              <p className="nc-drop__hint">
+                {t("newCampaign.replaceAudienceHint")}
+              </p>
+            )}
             <button
               type="button"
               className="btn btn--primary btn--sm"
@@ -323,7 +421,13 @@ export default function NewCampaignPage() {
                   onChange={(e) => set({ templateId: e.target.value })}
                   disabled={submitting}
                 >
-                  <option value="">{t("newCampaign.selectTemplate")}</option>
+                  <option value="">
+                    {t(
+                      isEdit
+                        ? "newCampaign.keepCurrentScript"
+                        : "newCampaign.selectTemplate",
+                    )}
+                  </option>
                   {templates.map((record) => (
                     <option key={record.id} value={record.id}>
                       {describeTemplate(record, lang).name}
@@ -493,6 +597,7 @@ export default function NewCampaignPage() {
           </div>
         </section>
       </div>
+      )}
     </div>
   );
 }

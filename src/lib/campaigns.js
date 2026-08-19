@@ -1,4 +1,4 @@
-// Creates/lists the campaign records the voice pipeline binds to.
+// Creates/lists/edits/deletes the campaign records the voice pipeline binds to.
 // Requests go through a proxy (see vite.config.js / your backend) that adds
 // the CAMPAIGN_API_KEY bearer token — the key must never reach the browser.
 import { apiError } from "./apiError";
@@ -16,10 +16,38 @@ const oneLine = (value) => (value ?? "").replace(/\s*\n+\s*/g, " ").trim();
 // Deployed backend can cold-start (scale-to-zero container) or hang outright —
 // cap the wait instead of leaving callers (CallModal, CampaignsPage) stuck forever.
 const REQUEST_TIMEOUT_MS = 20000;
+const TIMEOUT_MESSAGES = {
+  create: "انتهت مهلة إنشاء الحملة — الخادم بطيء أو غير متاح",
+  update: "انتهت مهلة تحديث الحملة — الخادم بطيء أو غير متاح",
+  list: "انتهت مهلة تحميل الحملات — الخادم بطيء أو غير متاح",
+  get: "انتهت مهلة تحميل الحملة — الخادم بطيء أو غير متاح",
+  delete: "انتهت مهلة حذف الحملة — الخادم بطيء أو غير متاح",
+};
+
+// Shared fetch-with-timeout for every campaigns endpoint below.
+async function request(path, { timeoutKey, action, ...options } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error(TIMEOUT_MESSAGES[timeoutKey]);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+  // Non-2xx bodies name the offending field — apiError() keeps it visible.
+  if (!res.ok) throw await apiError(res, action);
+  return res;
+}
 
 // `objective`/`audienceId`/`schedule`/`rateLimits`/`retry` are only sent when
 // provided — the trial-call flow (CallModal) omits all of them.
-export async function createCampaign({
+function buildBody({
   name,
   prompt,
   greeting,
@@ -31,7 +59,7 @@ export async function createCampaign({
   retry,
 }) {
   const spokenGreeting = oneLine(greeting).slice(0, MAX_GREETING);
-  const body = {
+  return {
     name: (name?.trim() || "اتصال تجريبي").slice(0, MAX_NAME),
     prompt: (prompt ?? "").slice(0, MAX_PROMPT),
     requires_identity_verification: false,
@@ -43,56 +71,63 @@ export async function createCampaign({
     ...(rateLimits ? { rate_limits: rateLimits } : {}),
     ...(retry ? { retry } : {}),
   };
+}
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(`${API_BASE}/api/v1/campaigns`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch (err) {
-    if (err.name === "AbortError") {
-      throw new Error("انتهت مهلة إنشاء الحملة — الخادم بطيء أو غير متاح");
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  // The 400 body names the offending field — apiError() keeps it visible.
-  if (!res.ok) throw await apiError(res, "تعذّر إنشاء الحملة");
-
+export async function createCampaign(fields) {
+  const res = await request("/api/v1/campaigns", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildBody(fields)),
+    timeoutKey: "create",
+    action: "تعذّر إنشاء الحملة",
+  });
   const data = await res.json();
   if (!data?.id) throw new Error("لم يُرجع الخادم معرّف الحملة");
   return data.id;
 }
 
+// Sends the full merged campaign state (not just changed fields) since it's
+// unconfirmed whether the backend's PUT is a partial patch or a full replace.
+export async function updateCampaign(id, fields) {
+  await request(`/api/v1/campaigns/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildBody(fields)),
+    timeoutKey: "update",
+    action: "تعذّر تحديث الحملة",
+  });
+}
+
+// Assumes the conventional DELETE /api/v1/campaigns/{id} route — unlike the
+// other endpoints here, this was never explicitly confirmed against the
+// backend contract, so a 404 here likely means the backend doesn't support it.
+export async function deleteCampaign(id) {
+  await request(`/api/v1/campaigns/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    timeoutKey: "delete",
+    action: "تعذّر حذف الحملة",
+  });
+}
+
 // Always 7 fixed fields per item (id, name, objective, status, audience_count,
 // created_at, scheduled_at) — see CampaignsPage.jsx.
 export async function listCampaigns() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(`${API_BASE}/api/v1/campaigns`, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    });
-  } catch (err) {
-    if (err.name === "AbortError") {
-      throw new Error("انتهت مهلة تحميل الحملات — الخادم بطيء أو غير متاح");
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (!res.ok) throw await apiError(res, "تعذّر تحميل الحملات");
-
+  const res = await request("/api/v1/campaigns", {
+    headers: { Accept: "application/json" },
+    timeoutKey: "list",
+    action: "تعذّر تحميل الحملات",
+  });
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+}
+
+// Same 7 fields as listCampaigns() plus prompt/greeting/overrides/schedule/
+// rate_limits/retry, each present only if actually saved (sparse response).
+export async function getCampaign(id) {
+  const res = await request(`/api/v1/campaigns/${encodeURIComponent(id)}`, {
+    headers: { Accept: "application/json" },
+    timeoutKey: "get",
+    action: "تعذّر تحميل الحملة",
+  });
+  return res.json();
 }

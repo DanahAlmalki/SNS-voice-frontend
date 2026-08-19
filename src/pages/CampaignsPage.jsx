@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Users, Clock, RotateCcw, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Users,
+  Clock,
+  RotateCcw,
+  Loader2,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { listCampaigns } from "../lib/campaigns";
+import { listCampaigns, deleteCampaign } from "../lib/campaigns";
 import { OBJECTIVES, objectiveTitle } from "../lib/objectives";
 import "./CampaignsPage.css";
 
@@ -24,6 +33,8 @@ export default function CampaignsPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [objective, setObjective] = useState("all");
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -80,6 +91,19 @@ export default function CampaignsPage() {
     setQuery("");
     setStatus("all");
     setObjective("all");
+  };
+
+  const handleDelete = (c) => {
+    if (!window.confirm(t("campaignsPage.confirmDelete", { name: c.name })))
+      return;
+    setDeleteError(null);
+    setDeletingId(c.id);
+    deleteCampaign(c.id)
+      .then(() => setCampaigns((list) => list.filter((x) => x.id !== c.id)))
+      .catch((err) =>
+        setDeleteError(err.message || t("campaignsPage.deleteError")),
+      )
+      .finally(() => setDeletingId(null));
   };
 
   return (
@@ -149,6 +173,10 @@ export default function CampaignsPage() {
         </button>
       </section>
 
+      {deleteError && (
+        <p className="campaigns__delete-error">{deleteError}</p>
+      )}
+
       <section className="panel campaigns__table-panel">
         {loading ? (
           <p className="campaigns__empty">
@@ -173,6 +201,7 @@ export default function CampaignsPage() {
                   <th>{t("campaignsPage.colStatus")}</th>
                   <th>{t("campaignsPage.colAudience")}</th>
                   <th>{t("campaignsPage.colScheduled")}</th>
+                  <th>{t("campaignsPage.colActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,6 +229,29 @@ export default function CampaignsPage() {
                         <span className="campaigns__cell">
                           <Clock size={14} />
                           {when ? dateFmt.format(new Date(when)) : "—"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="campaigns__actions">
+                          <button
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => navigate(`/campaigns/${c.id}/edit`)}
+                          >
+                            <Pencil size={14} />
+                            {t("campaignsPage.edit")}
+                          </button>
+                          <button
+                            className="btn btn--danger btn--sm"
+                            onClick={() => handleDelete(c)}
+                            disabled={deletingId === c.id}
+                          >
+                            {deletingId === c.id ? (
+                              <Loader2 className="spin" size={14} />
+                            ) : (
+                              <Trash2 size={14} />
+                            )}
+                            {t("campaignsPage.delete")}
+                          </button>
                         </span>
                       </td>
                     </tr>

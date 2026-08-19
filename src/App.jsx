@@ -21,6 +21,7 @@ function AppRoutes() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/campaigns" element={<CampaignsPage />} />
           <Route path="/campaigns/new" element={<NewCampaignPage />} />
+          <Route path="/campaigns/:id/edit" element={<NewCampaignPage />} />
           <Route path="/campaign-map" element={<CampaignMapPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/templates/new" element={<TemplateWizard />} />

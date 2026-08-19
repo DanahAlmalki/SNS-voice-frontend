@@ -94,6 +94,18 @@
   flex-shrink: 0;
 }
 
+.campaigns__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.campaigns__delete-error {
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  margin: 0 0 var(--sp-4);
+}
+
 .campaigns__empty {
   padding: var(--sp-8);
   text-align: center;
