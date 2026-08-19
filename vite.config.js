@@ -8,10 +8,11 @@ export default defineConfig(({ mode }) => {
   const target =
     env.CAMPAIGN_API_TARGET ??
     "https://voice-containerapp.jollygrass-66012e86.westus3.azurecontainerapps.io";
-  // twilio_bridge.py's own default (TWILIO_BRIDGE_PORT=8080), run locally
-  // alongside this dev server — NGROK_URL is only needed for Twilio's own
-  // webhooks to reach the bridge, not for this same-machine proxy hop.
-  const bridgeTarget = env.TWILIO_BRIDGE_TARGET ?? "http://localhost:8080";
+  // Same deployed backend by default as `target` above (nginx there already
+  // routes /api/v1/outbound-call to twilio_bridge.py, see deploy/pipecat/
+  // nginx.conf) - only override to http://localhost:8080 if you're
+  // intentionally running twilio_bridge.py locally yourself.
+  const bridgeTarget = env.TWILIO_BRIDGE_TARGET ?? target;
 
   // Shared with both proxies below: same CAMPAIGN_API_KEY the bridge's
   // _require_api_key() and the campaigns API both check.
