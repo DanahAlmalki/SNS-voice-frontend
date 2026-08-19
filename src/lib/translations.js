@@ -188,6 +188,7 @@ export const translations = {
       micLevel: "مستوى الصوت",
       setupError: "تعذّر بدء المكالمة",
       realCallError: "تعذّر بدء الاتصال الحقيقي",
+      retry: "إعادة المحاولة",
       phoneIntro:
         "أدخل رقم الجوال (مع رمز الدولة) لبدء مكالمة هاتفية حقيقية بهذا القالب عبر تويليو.",
       phoneLabel: "رقم الجوال",
@@ -469,6 +470,7 @@ export const translations = {
       micLevel: "Mic level",
       setupError: "Couldn't start the call",
       realCallError: "Couldn't start the real call",
+      retry: "Retry",
       phoneIntro:
         "Enter a phone number (with country code) to start a real phone call with this template via Twilio.",
       phoneLabel: "Phone number",

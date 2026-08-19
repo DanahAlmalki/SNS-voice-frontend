@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, PhoneOff, Phone, Copy, Check, Mic, Loader2 } from "lucide-react";
+import { X, PhoneOff, Phone, Copy, Check, Mic, Loader2, RotateCcw } from "lucide-react";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { createCampaign } from "../lib/campaigns";
 import { startOutboundCall } from "../lib/outboundCall";
@@ -45,16 +45,20 @@ export default function CallModal({
   // Register the prompt + overrides as a campaign, then either open the
   // browser mic socket (trial call) or just keep the id for a real Twilio
   // call — the overrides only apply at pipeline build time either way.
+  const runSetup = () => {
+    setSetupError(null);
+    createCampaign({ name, prompt, greeting, overrides })
+      .then((id) => {
+        setCampaignId(id);
+        if (!isPhoneMode) start(id);
+      })
+      .catch((err) => setSetupError(err.message || t("callModal.setupError")));
+  };
+
   useEffect(() => {
     if (open && !started.current) {
       started.current = true;
-      setSetupError(null);
-      createCampaign({ name, prompt, greeting, overrides })
-        .then((id) => {
-          setCampaignId(id);
-          if (!isPhoneMode) start(id);
-        })
-        .catch((err) => setSetupError(err.message || t("callModal.setupError")));
+      runSetup();
     }
     if (!open && started.current) {
       started.current = false;
@@ -241,6 +245,12 @@ export default function CallModal({
               <p className="phone-view__msg phone-view__msg--err">
                 {setupError || callError}
               </p>
+            )}
+            {setupError && (
+              <button className="btn btn--ghost btn--sm" onClick={runSetup}>
+                <RotateCcw size={14} />
+                {t("callModal.retry")}
+              </button>
             )}
             {callResult && (
               <p className="phone-view__msg phone-view__msg--ok">
