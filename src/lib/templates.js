@@ -53,8 +53,8 @@ const DEMO_TEMPLATES = [
       nameEn: "Appointment Booking Campaign",
       objective: "appointment",
       voice: "salwa",
-      purpose: "قالب لتحديد مواعيد مع العملاء المحتملين وعرض الخدمات.",
-      purposeEn: "A template for booking appointments with leads and presenting services.",
+      purpose: "وكيل لتحديد مواعيد مع العملاء المحتملين وعرض الخدمات.",
+      purposeEn: "An agent for booking appointments with leads and presenting services.",
     },
   },
   {
