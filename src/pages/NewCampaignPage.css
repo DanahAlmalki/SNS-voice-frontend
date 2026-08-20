@@ -184,6 +184,27 @@
   color: var(--danger);
 }
 
+.nc-files__open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.nc-files__open:hover {
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+
 /* ---------- Segmentation inside import panel ---------- */
 .nc-import__seg-head {
   margin-top: var(--sp-8);

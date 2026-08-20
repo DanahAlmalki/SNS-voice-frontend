@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   FileText,
   X,
+  ExternalLink,
   Filter,
   CalendarClock,
   Gauge,
@@ -155,6 +156,16 @@ export default function NewCampaignPage() {
 
   const removeFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
+
+  // Files live only in memory until submit, so "opening" one just hands the
+  // browser a temporary blob URL to view in its own tab. Re-wrapped as
+  // text/plain because Windows tags .csv picks as application/vnd.ms-excel,
+  // which Chrome/Edge force-download instead of displaying.
+  const openFile = (file) => {
+    const url = URL.createObjectURL(new Blob([file], { type: "text/plain" }));
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
 
   const handleSubmit = async () => {
     setFieldError(null);
@@ -374,6 +385,14 @@ export default function NewCampaignPage() {
                   <span className="nc-files__size">
                     {formatSize(file.size)}
                   </span>
+                  <button
+                    type="button"
+                    className="nc-files__open"
+                    onClick={() => openFile(file)}
+                    aria-label={t("newCampaign.openFileAria", { name: file.name })}
+                  >
+                    <ExternalLink size={16} />
+                  </button>
                   <button
                     type="button"
                     className="nc-files__remove"
