@@ -90,6 +90,7 @@ export const translations = {
       stopping: "جارٍ الإيقاف…",
       confirmStop: 'إيقاف الاتصال بحملة "{{name}}"؟ لن تُلغى المكالمات الجارية حاليًا.',
       stopError: "تعذّر إيقاف الحملة",
+      stopNotRunning: "الحملة لم تعد قيد التنفيذ فعليًا على الخادم؛ تم تحديث حالتها المعروضة.",
       statusStopped: "متوقفة",
     },
     campaignMap: {
@@ -408,6 +409,7 @@ export const translations = {
       stopping: "Stopping…",
       confirmStop: 'Stop campaign "{{name}}"? Calls already in progress will not be cancelled.',
       stopError: "Couldn't stop the campaign",
+      stopNotRunning: "The campaign isn't actually running on the server anymore; its displayed status has been refreshed.",
       statusStopped: "Stopped",
     },
     campaignMap: {

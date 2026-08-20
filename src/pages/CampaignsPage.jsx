@@ -13,7 +13,7 @@ import {
   Square,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { listCampaigns, deleteCampaign, startCampaign, stopCampaign } from "../lib/campaigns";
+import { listCampaigns, deleteCampaign, startCampaign, stopCampaign, getCampaign } from "../lib/campaigns";
 import { OBJECTIVES, objectiveTitle } from "../lib/objectives";
 import "./CampaignsPage.css";
 
@@ -139,7 +139,24 @@ export default function CampaignsPage() {
           list.map((x) => (x.id === c.id ? { ...x, status } : x)),
         ),
       )
-      .catch((err) => setStopError(err.message || t("campaignsPage.stopError")))
+      .catch((err) => {
+        // The server's persisted `status` can say "in_progress" while its run
+        // record is gone (e.g. lost across a container redeploy) - a plain
+        // retry would 404 forever, so resync this row to whatever the server
+        // actually reports instead of leaving a stale Stop button behind.
+        if (err.status === 404) {
+          setStopError(t("campaignsPage.stopNotRunning"));
+          getCampaign(c.id)
+            .then((data) =>
+              setCampaigns((list) =>
+                list.map((x) => (x.id === c.id ? { ...x, status: data.status ?? x.status } : x)),
+              ),
+            )
+            .catch(() => {});
+          return;
+        }
+        setStopError(err.message || t("campaignsPage.stopError"));
+      })
       .finally(() => setStoppingId(null));
   };
 
