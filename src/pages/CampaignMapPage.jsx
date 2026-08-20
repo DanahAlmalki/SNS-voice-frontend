@@ -1,69 +1,20 @@
-import { useMemo, useState } from "react";
-import { LayoutTemplate, Users, Megaphone } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { LayoutTemplate, Users, Megaphone, Loader2, RotateCcw } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
+import { listCampaigns, getCampaign } from "../lib/campaigns";
+import { getAudience } from "../lib/audiences";
+import {
+  findTemplate,
+  lastCampaignTemplateId,
+  describeTemplate,
+} from "../lib/templates";
 import "./CampaignMapPage.css";
-
-/* ---------- Demo data ---------- */
-const TEMPLATES = [
-  { id: "t1", name: "حجز المواعيد", nameEn: "Appointment Booking" },
-  { id: "t2", name: "تأهيل العملاء", nameEn: "Lead Qualification" },
-  { id: "t3", name: "متابعة الطلبات", nameEn: "Order Follow-up" },
-];
-
-const AUDIENCES = [
-  { id: "a1", name: "عملاء الرياض ٢٠٢٦", nameEn: "Riyadh Customers 2026", size: 1240 },
-  { id: "a2", name: "قائمة المهتمين", nameEn: "Interested Leads List", size: 860 },
-  { id: "a3", name: "العملاء الجدد", nameEn: "New Customers", size: 430 },
-  { id: "a4", name: "قاعدة العملاء الكاملة", nameEn: "Full Customer Base", size: 2100 },
-];
-
-const CAMPAIGNS = [
-  {
-    id: "c1",
-    name: "حجز المواعيد - الربع الثالث",
-    nameEn: "Appointment Booking - Q3",
-    template: "t1",
-    audience: "a1",
-    status: "in_progress",
-  },
-  {
-    id: "c2",
-    name: "تأهيل العملاء المحتملين",
-    nameEn: "Lead Qualification",
-    template: "t2",
-    audience: "a2",
-    status: "completed",
-  },
-  {
-    id: "c3",
-    name: "متابعة العملاء الجدد",
-    nameEn: "New Customer Follow-up",
-    template: "t3",
-    audience: "a3",
-    status: "not_started",
-  },
-  {
-    id: "c4",
-    name: "استطلاع رضا العملاء",
-    nameEn: "Customer Satisfaction Survey",
-    template: "t3",
-    audience: "a4",
-    status: "in_progress",
-  },
-  {
-    id: "c5",
-    name: "إعادة استهداف المهتمين",
-    nameEn: "Re-targeting Interested Leads",
-    template: "t1",
-    audience: "a2",
-    status: "not_started",
-  },
-];
 
 const STATUS = {
   completed: { labelKey: "campaignMap.statusCompleted", cls: "cmap-badge--completed" },
   in_progress: { labelKey: "campaignMap.statusInProgress", cls: "cmap-badge--progress" },
   not_started: { labelKey: "campaignMap.statusNotStarted", cls: "cmap-badge--pending" },
+  stopped: { labelKey: "campaignMap.statusStopped", cls: "cmap-badge--stopped" },
 };
 
 /* ---------- Layout constants (LTR canvas coordinates) ---------- */
@@ -96,50 +47,119 @@ export default function CampaignMapPage() {
   const [hovered, setHovered] = useState(null);
   const { t, lang, dir } = useLanguage();
   const isEn = lang === "en";
+  const locale = isEn ? "en-US" : "ar-EG";
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [audiences, setAudiences] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  // Neither a campaign's template nor its audience_id is on the list
+  // endpoint's 7 fixed fields (templates are never sent to the backend at
+  // all - see templates.js - and audience_id only comes back from the
+  // per-campaign detail endpoint), so every campaign that has an audience
+  // needs one extra GET before its audience's filename can be resolved.
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    listCampaigns()
+      .then(async (list) => {
+        const withAudience = list.filter((c) => c.audience_count);
+        const details = await Promise.allSettled(withAudience.map((c) => getCampaign(c.id)));
+
+        const audienceIdByCampaign = {};
+        const audienceSizeById = {};
+        details.forEach((res, i) => {
+          if (res.status !== "fulfilled" || !res.value.audience_id) return;
+          const aid = res.value.audience_id;
+          audienceIdByCampaign[withAudience[i].id] = aid;
+          audienceSizeById[aid] = withAudience[i].audience_count ?? 0;
+        });
+
+        // Filenames are a nice-to-have on top of the id/size above, so a
+        // failure here (e.g. a deleted audience file) just leaves it unnamed
+        // instead of dropping the node.
+        const audienceIds = Object.keys(audienceSizeById);
+        const infos = await Promise.allSettled(audienceIds.map((aid) => getAudience(aid)));
+        setAudiences(
+          audienceIds.map((aid, i) => ({
+            id: aid,
+            size: audienceSizeById[aid],
+            filename: infos[i].status === "fulfilled" ? infos[i].value.filename : null,
+          })),
+        );
+
+        setCampaigns(
+          list.map((c) => {
+            const tid = lastCampaignTemplateId(c.id);
+            return {
+              ...c,
+              audienceId: audienceIdByCampaign[c.id] ?? null,
+              templateId: tid && findTemplate(tid) ? tid : null,
+            };
+          }),
+        );
+      })
+      .catch((err) => setLoadError(err.message || t("campaignMap.loadError")))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Only templates at least one loaded campaign actually points to - an
+  // unused saved template already has a home on the Templates page, and
+  // showing it here would just be a dangling node with no edge to anything.
+  const templates = useMemo(() => {
+    const usedIds = [...new Set(campaigns.map((c) => c.templateId).filter(Boolean))];
+    return usedIds.map((id) => ({ id, name: describeTemplate(findTemplate(id), lang).name }));
+  }, [campaigns, lang]);
 
   const { nodes, edges, canvasW, canvasH } = useMemo(() => {
-    const rows = Math.max(TEMPLATES.length, CAMPAIGNS.length, AUDIENCES.length);
+    const rows = Math.max(templates.length, campaigns.length, audiences.length);
     const canvasH = PAD_TOP + PAD_BOTTOM + rows * (NODE_H + V_GAP) - V_GAP;
     const canvasW = COL_X[2] + NODE_W + PAD_X;
 
-    const templates = layoutColumn(TEMPLATES, 0, canvasH);
-    const campaigns = layoutColumn(CAMPAIGNS, 1, canvasH);
-    const audiences = layoutColumn(AUDIENCES, 2, canvasH);
+    const templateNodes = layoutColumn(templates, 0, canvasH);
+    const campaignNodes = layoutColumn(campaigns, 1, canvasH);
+    const audienceNodes = layoutColumn(audiences, 2, canvasH);
 
     const byId = {};
-    [...templates, ...campaigns, ...audiences].forEach((n) => (byId[n.id] = n));
+    [...templateNodes, ...campaignNodes, ...audienceNodes].forEach((n) => (byId[n.id] = n));
 
     const edges = [];
-    campaigns.forEach((c) => {
-      const t = byId[c.template];
-      const a = byId[c.audience];
-      if (t) {
+    campaignNodes.forEach((c) => {
+      const tpl = byId[c.templateId];
+      const aud = byId[c.audienceId];
+      if (tpl) {
         edges.push({
-          id: `${t.id}-${c.id}`,
-          from: t.id,
+          id: `${tpl.id}-${c.id}`,
+          from: tpl.id,
           to: c.id,
           type: "template",
-          d: edgePath(t.x + NODE_W, t.y + NODE_H / 2, c.x, c.y + NODE_H / 2),
+          d: edgePath(tpl.x + NODE_W, tpl.y + NODE_H / 2, c.x, c.y + NODE_H / 2),
         });
       }
-      if (a) {
+      if (aud) {
         edges.push({
-          id: `${c.id}-${a.id}`,
+          id: `${c.id}-${aud.id}`,
           from: c.id,
-          to: a.id,
+          to: aud.id,
           type: "audience",
-          d: edgePath(c.x + NODE_W, c.y + NODE_H / 2, a.x, a.y + NODE_H / 2),
+          d: edgePath(c.x + NODE_W, c.y + NODE_H / 2, aud.x, aud.y + NODE_H / 2),
         });
       }
     });
 
     return {
-      nodes: { templates, campaigns, audiences },
+      nodes: { templates: templateNodes, campaigns: campaignNodes, audiences: audienceNodes },
       edges,
       canvasW,
       canvasH,
     };
-  }, []);
+  }, [templates, campaigns, audiences]);
 
   const connected = useMemo(() => {
     if (!hovered) return null;
@@ -154,10 +174,8 @@ export default function CampaignMapPage() {
   const isDim = (id) => connected && !connected.has(id);
   const edgeActive = (e) => hovered && (e.from === hovered || e.to === hovered);
 
-  const templateUsage = (id) =>
-    CAMPAIGNS.filter((c) => c.template === id).length;
-  const audienceUsage = (id) =>
-    CAMPAIGNS.filter((c) => c.audience === id).length;
+  const templateUsage = (id) => campaigns.filter((c) => c.templateId === id).length;
+  const audienceUsage = (id) => campaigns.filter((c) => c.audienceId === id).length;
 
   return (
     <div className="cmap">
@@ -181,91 +199,111 @@ export default function CampaignMapPage() {
         </ul>
       </header>
 
-      <section className="panel cmap__canvas-wrap">
-        <div
-          className="cmap__canvas"
-          dir="ltr"
-          style={{ width: canvasW, height: canvasH }}
-        >
+      {loading ? (
+        <p className="cmap__empty">
+          <Loader2 className="spin" size={18} />
+          {t("campaignMap.loading")}
+        </p>
+      ) : loadError ? (
+        <div className="cmap__empty cmap__empty--error">
+          <p>{loadError}</p>
+          <button className="btn btn--ghost btn--sm" onClick={load}>
+            <RotateCcw size={14} />
+            {t("campaignMap.retry")}
+          </button>
+        </div>
+      ) : campaigns.length === 0 ? (
+        <p className="cmap__empty">{t("campaignMap.empty")}</p>
+      ) : (
+        <section className="panel cmap__canvas-wrap">
           <div
-            className="cmap__col-label"
-            style={{ left: COL_X[0], width: NODE_W }}
+            className="cmap__canvas"
+            dir="ltr"
+            style={{ width: canvasW, height: canvasH }}
           >
-            {t("campaignMap.legendTemplates")}
-          </div>
-          <div
-            className="cmap__col-label"
-            style={{ left: COL_X[1], width: NODE_W }}
-          >
-            {t("campaignMap.legendCampaigns")}
-          </div>
-          <div
-            className="cmap__col-label"
-            style={{ left: COL_X[2], width: NODE_W }}
-          >
-            {t("campaignMap.legendAudiences")}
-          </div>
+            <div
+              className="cmap__col-label"
+              style={{ left: COL_X[0], width: NODE_W }}
+            >
+              {t("campaignMap.legendTemplates")}
+            </div>
+            <div
+              className="cmap__col-label"
+              style={{ left: COL_X[1], width: NODE_W }}
+            >
+              {t("campaignMap.legendCampaigns")}
+            </div>
+            <div
+              className="cmap__col-label"
+              style={{ left: COL_X[2], width: NODE_W }}
+            >
+              {t("campaignMap.legendAudiences")}
+            </div>
 
-          <svg className="cmap__edges" width={canvasW} height={canvasH}>
-            {edges.map((e) => (
-              <path
-                key={e.id}
-                d={e.d}
-                className={`cmap__edge cmap__edge--${e.type} ${
-                  edgeActive(e) ? "is-active" : ""
-                } ${hovered && !edgeActive(e) ? "is-dim" : ""}`}
+            <svg className="cmap__edges" width={canvasW} height={canvasH}>
+              {edges.map((e) => (
+                <path
+                  key={e.id}
+                  d={e.d}
+                  className={`cmap__edge cmap__edge--${e.type} ${
+                    edgeActive(e) ? "is-active" : ""
+                  } ${hovered && !edgeActive(e) ? "is-dim" : ""}`}
+                />
+              ))}
+            </svg>
+
+            {nodes.templates.map((n) => (
+              <MapNode
+                key={n.id}
+                node={n}
+                type="template"
+                icon={LayoutTemplate}
+                meta={`${templateUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
+                dim={isDim(n.id)}
+                lang={lang}
+                dir={dir}
+                onEnter={() => setHovered(n.id)}
+                onLeave={() => setHovered(null)}
               />
             ))}
-          </svg>
 
-          {nodes.templates.map((n) => (
-            <MapNode
-              key={n.id}
-              node={n}
-              type="template"
-              icon={LayoutTemplate}
-              meta={`${templateUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
-              dim={isDim(n.id)}
-              lang={lang}
-              dir={dir}
-              onEnter={() => setHovered(n.id)}
-              onLeave={() => setHovered(null)}
-            />
-          ))}
+            {nodes.campaigns.map((n) => {
+              const status = STATUS[n.status] ?? STATUS.not_started;
+              return (
+                <MapNode
+                  key={n.id}
+                  node={n}
+                  type="campaign"
+                  icon={Megaphone}
+                  badge={{ label: t(status.labelKey), cls: status.cls }}
+                  dim={isDim(n.id)}
+                  lang={lang}
+                  dir={dir}
+                  onEnter={() => setHovered(n.id)}
+                  onLeave={() => setHovered(null)}
+                />
+              );
+            })}
 
-          {nodes.campaigns.map((n) => (
-            <MapNode
-              key={n.id}
-              node={n}
-              type="campaign"
-              icon={Megaphone}
-              badge={{ label: t(STATUS[n.status].labelKey), cls: STATUS[n.status].cls }}
-              dim={isDim(n.id)}
-              lang={lang}
-              dir={dir}
-              onEnter={() => setHovered(n.id)}
-              onLeave={() => setHovered(null)}
-            />
-          ))}
-
-          {nodes.audiences.map((n) => (
-            <MapNode
-              key={n.id}
-              node={n}
-              type="audience"
-              icon={Users}
-              meta={`${n.size.toLocaleString(isEn ? "en-US" : "ar-EG")} ${t(
-                "campaignMap.contactsWord",
-              )} · ${audienceUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
-              dim={isDim(n.id)}
-              lang={lang}
-              dir={dir}
-              onEnter={() => setHovered(n.id)}
-              onLeave={() => setHovered(null)}
-            />
-          ))}
-        </div>
-      </section>
+            {nodes.audiences.map((n) => (
+              <MapNode
+                key={n.id}
+                node={{ ...n, name: n.filename || t("campaignMap.audienceFallbackName") }}
+                type="audience"
+                icon={Users}
+                meta={`${n.size.toLocaleString(locale)} ${t(
+                  "campaignMap.contactsWord",
+                )} · ${audienceUsage(n.id)} ${t("campaignMap.campaignsSuffix")}`}
+                dim={isDim(n.id)}
+                lang={lang}
+                dir={dir}
+                onEnter={() => setHovered(n.id)}
+                onLeave={() => setHovered(null)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

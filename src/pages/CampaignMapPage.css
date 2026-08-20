@@ -56,6 +56,22 @@
   background: #2f7d4f;
 }
 
+/* ---------- Loading / error / empty states ---------- */
+.cmap__empty {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.cmap__empty--error {
+  color: var(--danger);
+  flex-direction: column;
+}
+
 /* ---------- Canvas ---------- */
 .cmap__canvas-wrap.panel {
   padding: 0;
@@ -214,6 +230,10 @@
 .cmap-badge--pending {
   background: var(--surface-muted);
   color: var(--text-muted);
+}
+.cmap-badge--stopped {
+  background: var(--danger-weak);
+  color: var(--danger);
 }
 
 @media (max-width: 640px) {
