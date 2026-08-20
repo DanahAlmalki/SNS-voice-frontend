@@ -1,0 +1,37 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 52px;
+  padding-inline: var(--sp-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar__theme-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.topbar__theme-btn:hover {
+  background: var(--accent-weak);
+  color: var(--accent-text);
+  border-color: var(--accent-weak-2);
+}
+.topbar__theme-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
