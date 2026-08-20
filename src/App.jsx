@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClipboardList, Settings, CircleHelp } from "lucide-react";
+import { ClipboardList, CircleHelp } from "lucide-react";
 import Layout from "./components/Layout.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import TemplatesPage from "./pages/TemplatesPage.jsx";
 import CampaignsPage from "./pages/CampaignsPage.jsx";
 import CampaignMapPage from "./pages/CampaignMapPage.jsx";
 import NewCampaignPage from "./pages/NewCampaignPage.jsx";
+import SettingsPage from "./pages/SettingsPage.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import TemplateWizard from "./TemplateWizard.jsx";
@@ -30,10 +31,7 @@ function AppRoutes() {
             path="/records"
             element={<Placeholder title={t("app.records")} icon={ClipboardList} />}
           />
-          <Route
-            path="/settings"
-            element={<Placeholder title={t("app.settings")} icon={Settings} />}
-          />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route
             path="/help"
             element={<Placeholder title={t("app.help")} icon={CircleHelp} />}

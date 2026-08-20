@@ -16,7 +16,7 @@ export const translations = {
       themeLight: "فاتح",
       themeDark: "داكن",
       themeAriaLabel: "مظهر الواجهة",
-      langAriaLabel: "لغة الواجهة",
+      userName: "المستخدم",
       logout: "تسجيل الخروج",
       expandMenu: "توسيع القائمة",
       collapseMenu: "طي القائمة",
@@ -28,6 +28,11 @@ export const translations = {
     },
     placeholder: {
       comingSoon: "هذه الصفحة قيد الإنشاء.",
+    },
+    settingsPage: {
+      title: "الإعدادات",
+      languageTitle: "لغة الواجهة",
+      languageDesc: "اختر اللغة التي يظهر بها التطبيق.",
     },
     login: {
       welcome: "أهلاً بك",
@@ -316,7 +321,7 @@ export const translations = {
       themeLight: "Light",
       themeDark: "Dark",
       themeAriaLabel: "Interface theme",
-      langAriaLabel: "Interface language",
+      userName: "User",
       logout: "Log out",
       expandMenu: "Expand menu",
       collapseMenu: "Collapse menu",
@@ -328,6 +333,11 @@ export const translations = {
     },
     placeholder: {
       comingSoon: "This page is under construction.",
+    },
+    settingsPage: {
+      title: "Settings",
+      languageTitle: "Interface language",
+      languageDesc: "Choose the language the app is displayed in.",
     },
     login: {
       welcome: "Welcome",

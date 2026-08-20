@@ -1,0 +1,84 @@
+.settings {
+  padding: var(--sp-8) clamp(var(--sp-4), 4vw, var(--sp-10));
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.settings__header {
+  margin-bottom: var(--sp-8);
+}
+.settings__title {
+  font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
+  margin: 0;
+}
+
+.settings__card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-5);
+}
+
+.settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.settings__row-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.settings__row-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+.settings__row-title {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+.settings__row-desc {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* Pill-style choice group, same visual language as TemplateWizard's .segmented */
+.settings__choice {
+  display: inline-flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.settings__choice button {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: var(--r-full);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.settings__choice button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.settings__choice button.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  color: var(--accent-text);
+  font-weight: 700;
+}

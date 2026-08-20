@@ -8,6 +8,7 @@ import {
   Waypoints,
   Settings,
   CircleHelp,
+  User,
   Sun,
   Moon,
   LogOut,
@@ -37,11 +38,6 @@ const SCHEMES = [
   { key: "dark", labelKey: "sidebar.themeDark", icon: Moon },
 ];
 
-const LANGS = [
-  { key: "ar", label: "عربي" },
-  { key: "en", label: "English" },
-];
-
 function SidebarLink({ item }) {
   const { t } = useLanguage();
   const Icon = item.icon;
@@ -66,7 +62,7 @@ function SidebarLink({ item }) {
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [scheme, setScheme] = useState(loadScheme);
-  const { t, lang, setLang, dir } = useLanguage();
+  const { t, dir } = useLanguage();
 
   useEffect(() => {
     applyScheme(scheme);
@@ -103,28 +99,6 @@ export default function Sidebar() {
 
         <div className="sidebar__group sidebar__group--footer">
           <div
-            className={`sidebar__lang ${lang === "en" ? "is-en" : ""}`}
-            role="group"
-            aria-label={t("sidebar.langAriaLabel")}
-          >
-            <span className="sidebar__theme-thumb" aria-hidden="true" />
-            {LANGS.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                className={`sidebar__theme-btn ${
-                  lang === l.key ? "is-active" : ""
-                }`}
-                onClick={() => setLang(l.key)}
-                aria-pressed={lang === l.key}
-                title={l.label}
-              >
-                <span className="sidebar__label">{l.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div
             className={`sidebar__theme ${scheme === "dark" ? "is-dark" : ""}`}
             role="group"
             aria-label={t("sidebar.themeAriaLabel")}
@@ -151,10 +125,25 @@ export default function Sidebar() {
             })}
           </div>
 
-          <Link className="sidebar__logout" to="/login">
-            <LogOut size={16} strokeWidth={2} />
-            <span className="sidebar__label">{t("sidebar.logout")}</span>
-          </Link>
+          <div className="sidebar__profile">
+            <div className="sidebar__profile-identity">
+              <span className="sidebar__user-avatar" aria-hidden="true">
+                <User size={16} strokeWidth={2} />
+              </span>
+              <span className="sidebar__label sidebar__user-name">
+                {t("sidebar.userName")}
+              </span>
+            </div>
+
+            <Link
+              className="sidebar__profile-logout"
+              to="/login"
+              title={t("sidebar.logout")}
+              aria-label={t("sidebar.logout")}
+            >
+              <LogOut size={16} strokeWidth={2} />
+            </Link>
+          </div>
         </div>
       </nav>
 
