@@ -127,6 +127,39 @@ export function deleteTemplate(id) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
 
+// The backend campaign record only stores the flattened prompt/greeting/
+// overrides text, never which template produced it — so NewCampaignPage.jsx
+// remembers the association here (keyed by campaign id) purely to pre-select
+// the right option in its Template dropdown next time the campaign is
+// reopened for editing. Without this, the dropdown always fell back to its
+// blank "keep current script" option on every reload, even right after a
+// template had just been applied and saved.
+const CAMPAIGN_TEMPLATE_KEY = "sns-campaign-templates";
+
+function loadCampaignTemplateMap() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CAMPAIGN_TEMPLATE_KEY));
+    return saved && typeof saved === "object" ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
+export function rememberCampaignTemplate(campaignId, templateId) {
+  if (!campaignId || !templateId) return;
+  const map = loadCampaignTemplateMap();
+  map[String(campaignId)] = String(templateId);
+  localStorage.setItem(CAMPAIGN_TEMPLATE_KEY, JSON.stringify(map));
+}
+
+// Returns "" (falls back to "keep current script") when nothing was
+// remembered, and callers re-check findTemplate() themselves in case the
+// remembered template was since deleted.
+export function lastCampaignTemplateId(campaignId) {
+  if (!campaignId) return "";
+  return loadCampaignTemplateMap()[String(campaignId)] ?? "";
+}
+
 // Flattens a wizard record into the summary shown on the templates list/cards.
 export function describeTemplate(record, lang = "ar") {
   const d = record.data || {};

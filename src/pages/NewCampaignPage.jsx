@@ -18,7 +18,7 @@ import {
 import { useLanguage } from "../lib/i18n.jsx";
 import { createCampaign, getCampaign, updateCampaign } from "../lib/campaigns";
 import { uploadAudience } from "../lib/audiences";
-import { listTemplates, findTemplate, describeTemplate } from "../lib/templates";
+import { listTemplates, findTemplate, describeTemplate, rememberCampaignTemplate, lastCampaignTemplateId } from "../lib/templates";
 import { OBJECTIVES } from "../lib/objectives";
 import { buildPrompt } from "../lib/buildPrompt";
 import { buildOverrides } from "../lib/buildOverrides";
@@ -88,8 +88,17 @@ export default function NewCampaignPage() {
           overrides: data.overrides ?? {},
           objective: data.objective,
         });
+        // Pre-select whichever template was last applied to this campaign
+        // (remembered locally — the backend itself only stores the flattened
+        // prompt/greeting/overrides, not a template reference) so the field
+        // doesn't just reset to "keep current script" on every reload. Falls
+        // back to "" if that template was since deleted.
+        const rememberedTemplateId = lastCampaignTemplateId(id);
         set({
           name: data.name ?? "",
+          templateId: findTemplate(rememberedTemplateId)
+            ? rememberedTemplateId
+            : "",
           ...(data.schedule
             ? {
                 timezone:
@@ -212,8 +221,13 @@ export default function NewCampaignPage() {
 
       if (isEdit) {
         await updateCampaign(id, payload);
+        // Only overwrite the remembered template when one was actually picked
+        // this time — leaving the dropdown on "keep current script" must not
+        // erase what an earlier save already remembered.
+        if (form.templateId) rememberCampaignTemplate(id, form.templateId);
       } else {
-        await createCampaign(payload);
+        const newId = await createCampaign(payload);
+        rememberCampaignTemplate(newId, form.templateId);
       }
 
       navigate("/campaigns");
