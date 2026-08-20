@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
 import { createCampaign, getCampaign, updateCampaign } from "../lib/campaigns";
-import { uploadAudience } from "../lib/audiences";
+import { uploadAudience, getAudience } from "../lib/audiences";
 import { listTemplates, findTemplate, describeTemplate, rememberCampaignTemplate, lastCampaignTemplateId } from "../lib/templates";
 import { OBJECTIVES } from "../lib/objectives";
 import { buildPrompt } from "../lib/buildPrompt";
@@ -47,6 +47,7 @@ export default function NewCampaignPage() {
   const [files, setFiles] = useState([]);
   const { t, lang, dir } = useLanguage();
   const BackIcon = dir === "rtl" ? ArrowRight : ArrowLeft;
+  const locale = lang === "en" ? "en-US" : "ar-EG";
 
   const [templates] = useState(() => listTemplates());
   const [form, setForm] = useState({
@@ -70,6 +71,10 @@ export default function NewCampaignPage() {
   const [baseFields, setBaseFields] = useState(null);
   const [loadingCampaign, setLoadingCampaign] = useState(isEdit);
   const [loadError, setLoadError] = useState(null);
+  // The audience file already attached server-side (files[] only tracks a
+  // NEW pick made this session, so without this the import panel looked
+  // empty — as if the file had vanished — on every reopen for editing.
+  const [existingAudience, setExistingAudience] = useState(null);
 
   const [fieldError, setFieldError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
@@ -80,6 +85,7 @@ export default function NewCampaignPage() {
     if (!isEdit) return;
     setLoadingCampaign(true);
     setLoadError(null);
+    setExistingAudience(null);
     getCampaign(id)
       .then((data) => {
         setBaseFields({
@@ -88,6 +94,19 @@ export default function NewCampaignPage() {
           overrides: data.overrides ?? {},
           objective: data.objective,
         });
+        if (data.audience_id) {
+          const count = data.audience_count ?? 0;
+          setExistingAudience({ count, filename: null });
+          // Filename is a nice-to-have; the count above already came from
+          // this same GET, so a failure here just leaves it unnamed.
+          getAudience(data.audience_id)
+            .then((info) =>
+              setExistingAudience((prev) =>
+                prev ? { ...prev, filename: info.filename } : prev,
+              ),
+            )
+            .catch(() => {});
+        }
         // Pre-select whichever template was last applied to this campaign
         // (remembered locally — the backend itself only stores the flattened
         // prompt/greeting/overrides, not a template reference) so the field
@@ -378,6 +397,23 @@ export default function NewCampaignPage() {
                   </button>
                 </li>
               ))}
+            </ul>
+          )}
+
+          {files.length === 0 && existingAudience && (
+            <ul className="nc-files">
+              <li className="nc-files__item">
+                <FileSpreadsheet size={18} className="nc-files__icon" />
+                <span className="nc-files__name">
+                  {existingAudience.filename ||
+                    t("newCampaign.existingAudienceFallbackName")}
+                </span>
+                <span className="nc-files__size">
+                  {t("newCampaign.existingAudienceCount", {
+                    count: existingAudience.count.toLocaleString(locale),
+                  })}
+                </span>
+              </li>
             </ul>
           )}
 

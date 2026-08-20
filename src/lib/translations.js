@@ -130,6 +130,8 @@ export const translations = {
         "الأعمدة المطلوبة في كل صف: full_name (الاسم الكامل) وid_last4 (آخر 4 أرقام من رقم الهوية).",
       replaceAudienceHint: "رفع ملف جديد يستبدل ملف الجمهور الحالي لهذه الحملة.",
       addFile: "إضافة ملف",
+      existingAudienceFallbackName: "ملف الجمهور الحالي",
+      existingAudienceCount: "{{count}} جهة اتصال",
       removeFileAria: "إزالة {{name}}",
       openFileAria: "فتح {{name}}",
       segmentationTitle: "التقسيم",
@@ -438,6 +440,8 @@ export const translations = {
       replaceAudienceHint:
         "Uploading a new file replaces this campaign's current audience file.",
       addFile: "Add file",
+      existingAudienceFallbackName: "Current audience file",
+      existingAudienceCount: "{{count}} contacts",
       removeFileAria: "Remove {{name}}",
       openFileAria: "Open {{name}}",
       segmentationTitle: "Segmentation",
