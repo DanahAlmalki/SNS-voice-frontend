@@ -58,12 +58,13 @@ export default function CallModal({
   useEffect(() => {
     if (open && !started.current) {
       started.current = true;
+      // Sync the visible tab to the mode of *this* open, not the last one.
+      setTab(isPhoneMode ? "phone" : "call");
       runSetup();
     }
     if (!open && started.current) {
       started.current = false;
       stop();
-      setTab(isPhoneMode ? "phone" : "call");
       setCopied(false);
       setSetupError(null);
       setCampaignId(null);
