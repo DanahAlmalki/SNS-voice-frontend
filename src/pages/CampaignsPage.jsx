@@ -9,9 +9,10 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  Play,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { listCampaigns, deleteCampaign } from "../lib/campaigns";
+import { listCampaigns, deleteCampaign, startCampaign } from "../lib/campaigns";
 import { OBJECTIVES, objectiveTitle } from "../lib/objectives";
 import "./CampaignsPage.css";
 
@@ -35,6 +36,8 @@ export default function CampaignsPage() {
   const [objective, setObjective] = useState("all");
   const [deletingId, setDeletingId] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [startingId, setStartingId] = useState(null);
+  const [startError, setStartError] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -104,6 +107,21 @@ export default function CampaignsPage() {
         setDeleteError(err.message || t("campaignsPage.deleteError")),
       )
       .finally(() => setDeletingId(null));
+  };
+
+  const handleStart = (c) => {
+    if (!window.confirm(t("campaignsPage.confirmStart", { name: c.name })))
+      return;
+    setStartError(null);
+    setStartingId(c.id);
+    startCampaign(c.id)
+      .then(({ status }) =>
+        setCampaigns((list) =>
+          list.map((x) => (x.id === c.id ? { ...x, status } : x)),
+        ),
+      )
+      .catch((err) => setStartError(err.message || t("campaignsPage.startError")))
+      .finally(() => setStartingId(null));
   };
 
   return (
@@ -176,6 +194,9 @@ export default function CampaignsPage() {
       {deleteError && (
         <p className="campaigns__delete-error">{deleteError}</p>
       )}
+      {startError && (
+        <p className="campaigns__delete-error">{startError}</p>
+      )}
 
       <section className="panel campaigns__table-panel">
         {loading ? (
@@ -233,6 +254,27 @@ export default function CampaignsPage() {
                       </td>
                       <td>
                         <span className="campaigns__actions">
+                          {c.status === "not_started" && (
+                            <button
+                              className="btn btn--primary btn--sm"
+                              onClick={() => handleStart(c)}
+                              disabled={startingId === c.id || !c.audience_count}
+                              title={
+                                !c.audience_count
+                                  ? t("campaignsPage.startNoAudience")
+                                  : undefined
+                              }
+                            >
+                              {startingId === c.id ? (
+                                <Loader2 className="spin" size={14} />
+                              ) : (
+                                <Play size={14} />
+                              )}
+                              {startingId === c.id
+                                ? t("campaignsPage.starting")
+                                : t("campaignsPage.start")}
+                            </button>
+                          )}
                           <button
                             className="btn btn--ghost btn--sm"
                             onClick={() => navigate(`/campaigns/${c.id}/edit`)}
