@@ -23,6 +23,7 @@ const TIMEOUT_MESSAGES = {
   get: "انتهت مهلة تحميل الحملة — الخادم بطيء أو غير متاح",
   delete: "انتهت مهلة حذف الحملة — الخادم بطيء أو غير متاح",
   start: "انتهت مهلة بدء الحملة — الخادم بطيء أو غير متاح",
+  stop: "انتهت مهلة إيقاف الحملة — الخادم بطيء أو غير متاح",
 };
 
 // Shared fetch-with-timeout for every campaigns endpoint below.
@@ -110,10 +111,11 @@ export async function deleteCampaign(id) {
   });
 }
 
-// Assumes POST /api/v1/campaigns/{id}/start begins dialing the campaign's
-// linked audience_id — like deleteCampaign, this route is not yet confirmed
-// against the backend contract. Backend may reply with an empty/204 body;
-// only `status` is read from it, defaulting to "in_progress" if absent.
+// POST /api/v1/campaigns/{id}/start (twilio_bridge.py) also resumes a
+// previously-stopped campaign — same route, from_statuses includes "stopped".
+// Its response reports status "running", NOT the persisted "in_progress"
+// enum value, so that's normalized here to keep callers' local state in sync
+// with what a subsequent GET /api/v1/campaigns would report.
 export async function startCampaign(id) {
   const res = await request(`/api/v1/campaigns/${encodeURIComponent(id)}/start`, {
     method: "POST",
@@ -121,7 +123,20 @@ export async function startCampaign(id) {
     action: "تعذّر بدء الحملة",
   });
   const data = await res.json().catch(() => null);
-  return { status: data?.status ?? "in_progress" };
+  return { status: data?.status === "running" ? "in_progress" : data?.status ?? "in_progress" };
+}
+
+// POST /api/v1/campaigns/{id}/stop (twilio_bridge.py): halts further dialling
+// but does not cancel calls already placed. Its response's status ("stopped")
+// matches the persisted enum already, unlike startCampaign's above.
+export async function stopCampaign(id) {
+  const res = await request(`/api/v1/campaigns/${encodeURIComponent(id)}/stop`, {
+    method: "POST",
+    timeoutKey: "stop",
+    action: "تعذّر إيقاف الحملة",
+  });
+  const data = await res.json().catch(() => null);
+  return { status: data?.status ?? "stopped" };
 }
 
 // Always 7 fixed fields per item (id, name, objective, status, audience_count,

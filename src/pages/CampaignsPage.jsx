@@ -10,9 +10,10 @@ import {
   Pencil,
   Trash2,
   Play,
+  Square,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { listCampaigns, deleteCampaign, startCampaign } from "../lib/campaigns";
+import { listCampaigns, deleteCampaign, startCampaign, stopCampaign } from "../lib/campaigns";
 import { OBJECTIVES, objectiveTitle } from "../lib/objectives";
 import "./CampaignsPage.css";
 
@@ -20,6 +21,7 @@ const STATUS = {
   completed: { labelKey: "campaignsPage.statusCompleted", cls: "badge--completed" },
   in_progress: { labelKey: "campaignsPage.statusInProgress", cls: "badge--progress" },
   not_started: { labelKey: "campaignsPage.statusNotStarted", cls: "badge--pending" },
+  stopped: { labelKey: "campaignsPage.statusStopped", cls: "badge--stopped" },
 };
 
 export default function CampaignsPage() {
@@ -38,6 +40,8 @@ export default function CampaignsPage() {
   const [deleteError, setDeleteError] = useState(null);
   const [startingId, setStartingId] = useState(null);
   const [startError, setStartError] = useState(null);
+  const [stoppingId, setStoppingId] = useState(null);
+  const [stopError, setStopError] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -124,6 +128,21 @@ export default function CampaignsPage() {
       .finally(() => setStartingId(null));
   };
 
+  const handleStop = (c) => {
+    if (!window.confirm(t("campaignsPage.confirmStop", { name: c.name })))
+      return;
+    setStopError(null);
+    setStoppingId(c.id);
+    stopCampaign(c.id)
+      .then(({ status }) =>
+        setCampaigns((list) =>
+          list.map((x) => (x.id === c.id ? { ...x, status } : x)),
+        ),
+      )
+      .catch((err) => setStopError(err.message || t("campaignsPage.stopError")))
+      .finally(() => setStoppingId(null));
+  };
+
   return (
     <div className="campaigns">
       <header className="campaigns__header">
@@ -167,6 +186,7 @@ export default function CampaignsPage() {
               {t("campaignsPage.statusInProgress")}
             </option>
             <option value="completed">{t("campaignsPage.statusCompleted")}</option>
+            <option value="stopped">{t("campaignsPage.statusStopped")}</option>
           </select>
         </div>
 
@@ -196,6 +216,9 @@ export default function CampaignsPage() {
       )}
       {startError && (
         <p className="campaigns__delete-error">{startError}</p>
+      )}
+      {stopError && (
+        <p className="campaigns__delete-error">{stopError}</p>
       )}
 
       <section className="panel campaigns__table-panel">
@@ -254,7 +277,7 @@ export default function CampaignsPage() {
                       </td>
                       <td>
                         <span className="campaigns__actions">
-                          {c.status === "not_started" && (
+                          {(c.status === "not_started" || c.status === "stopped") && (
                             <button
                               className="btn btn--primary btn--sm"
                               onClick={() => handleStart(c)}
@@ -275,24 +298,42 @@ export default function CampaignsPage() {
                                 : t("campaignsPage.start")}
                             </button>
                           )}
+                          {c.status === "in_progress" && (
+                            <button
+                              className="btn btn--danger btn--sm"
+                              onClick={() => handleStop(c)}
+                              disabled={stoppingId === c.id}
+                            >
+                              {stoppingId === c.id ? (
+                                <Loader2 className="spin" size={14} />
+                              ) : (
+                                <Square size={14} />
+                              )}
+                              {stoppingId === c.id
+                                ? t("campaignsPage.stopping")
+                                : t("campaignsPage.stop")}
+                            </button>
+                          )}
                           <button
-                            className="btn btn--ghost btn--sm"
+                            className="btn btn--ghost btn--sm btn--icon"
                             onClick={() => navigate(`/campaigns/${c.id}/edit`)}
+                            aria-label={t("campaignsPage.edit")}
+                            title={t("campaignsPage.edit")}
                           >
                             <Pencil size={14} />
-                            {t("campaignsPage.edit")}
                           </button>
                           <button
-                            className="btn btn--danger btn--sm"
+                            className="btn btn--danger btn--sm btn--icon"
                             onClick={() => handleDelete(c)}
                             disabled={deletingId === c.id}
+                            aria-label={t("campaignsPage.delete")}
+                            title={t("campaignsPage.delete")}
                           >
                             {deletingId === c.id ? (
                               <Loader2 className="spin" size={14} />
                             ) : (
                               <Trash2 size={14} />
                             )}
-                            {t("campaignsPage.delete")}
                           </button>
                         </span>
                       </td>

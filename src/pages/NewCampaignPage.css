@@ -250,6 +250,11 @@
   min-width: 160px;
   flex: 1;
 }
+.nc-field-hint {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
 
 .nc-check {
   display: flex;

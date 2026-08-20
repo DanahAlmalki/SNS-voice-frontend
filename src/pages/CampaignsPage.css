@@ -150,6 +150,10 @@
   background: var(--surface-muted);
   color: var(--text-muted);
 }
+.badge--stopped {
+  background: var(--danger-weak);
+  color: var(--danger);
+}
 
 @media (max-width: 640px) {
   .campaigns__header {

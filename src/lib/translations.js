@@ -86,6 +86,11 @@ export const translations = {
       confirmStart: 'بدء الاتصال بجميع جهات حملة "{{name}}"؟',
       startError: "تعذّر بدء الحملة",
       startNoAudience: "أضف جمهورًا أولاً قبل البدء",
+      stop: "إيقاف الحملة",
+      stopping: "جارٍ الإيقاف…",
+      confirmStop: 'إيقاف الاتصال بحملة "{{name}}"؟ لن تُلغى المكالمات الجارية حاليًا.',
+      stopError: "تعذّر إيقاف الحملة",
+      statusStopped: "متوقفة",
     },
     campaignMap: {
       title: "خريطة الحملات",
@@ -150,6 +155,9 @@ export const translations = {
       schedulingTitle: "الجدولة",
       schedulingDesc:
         "جدولة تراعي المنطقة الزمنية، وضبط نافذة الاتصال، واستثناء أيام العطلات.",
+      startDateLabel: "تاريخ بدء الحملة",
+      startDateHint:
+        "اختياري — عند تحديده، تبدأ المكالمات تلقائيًا في هذا التاريخ دون الحاجة لضغط زر البدء.",
       timezoneLabel: "المنطقة الزمنية",
       tzRiyadh: "الرياض (GMT+3)",
       tzCairo: "القاهرة (GMT+2)",
@@ -390,6 +398,16 @@ export const translations = {
       delete: "Delete",
       confirmDelete: 'Delete campaign "{{name}}"? This cannot be undone.',
       deleteError: "Couldn't delete the campaign",
+      start: "Start campaign",
+      starting: "Starting…",
+      confirmStart: 'Start calling every contact in campaign "{{name}}"?',
+      startError: "Couldn't start the campaign",
+      startNoAudience: "Add an audience before starting",
+      stop: "Stop campaign",
+      stopping: "Stopping…",
+      confirmStop: 'Stop campaign "{{name}}"? Calls already in progress will not be cancelled.',
+      stopError: "Couldn't stop the campaign",
+      statusStopped: "Stopped",
     },
     campaignMap: {
       title: "Campaign Map",
@@ -460,6 +478,9 @@ export const translations = {
       schedulingTitle: "Scheduling",
       schedulingDesc:
         "Timezone-aware scheduling, call window control, and holiday exclusions.",
+      startDateLabel: "Campaign start date",
+      startDateHint:
+        "Optional — if set, calling starts automatically on this date without clicking Start.",
       timezoneLabel: "Timezone",
       tzRiyadh: "Riyadh (GMT+3)",
       tzCairo: "Cairo (GMT+2)",

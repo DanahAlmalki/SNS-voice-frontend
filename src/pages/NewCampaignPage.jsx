@@ -54,6 +54,7 @@ export default function NewCampaignPage() {
     name: "",
     templateId: "",
     timezone: "riyadh",
+    startDate: "",
     windowStart: "09:00",
     windowEnd: "18:00",
     excludeHolidays: true,
@@ -122,6 +123,7 @@ export default function NewCampaignPage() {
             ? {
                 timezone:
                   TZ_REVERSE[data.schedule.timezone] ?? data.schedule.timezone,
+                startDate: data.schedule.start_date ?? "",
                 windowStart: data.schedule.window_start ?? "09:00",
                 windowEnd: data.schedule.window_end ?? "18:00",
                 excludeHolidays: data.schedule.exclude_holidays ?? true,
@@ -225,6 +227,7 @@ export default function NewCampaignPage() {
           window_start: form.windowStart,
           window_end: form.windowEnd,
           exclude_holidays: form.excludeHolidays,
+          ...(form.startDate ? { start_date: form.startDate } : {}),
         },
         rateLimits: {
           max_concurrent_calls: Number(form.concurrentCalls),
@@ -527,6 +530,18 @@ export default function NewCampaignPage() {
               </div>
             </div>
             <div className="nc-fields">
+              <div className="filter-field">
+                <label className="filter-label" htmlFor="sch-start-date">
+                  {t("newCampaign.startDateLabel")}
+                </label>
+                <input
+                  id="sch-start-date"
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => set({ startDate: e.target.value })}
+                />
+                <p className="nc-field-hint">{t("newCampaign.startDateHint")}</p>
+              </div>
               <div className="filter-field">
                 <label className="filter-label" htmlFor="sch-tz">
                   {t("newCampaign.timezoneLabel")}

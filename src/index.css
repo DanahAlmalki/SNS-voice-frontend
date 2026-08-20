@@ -229,6 +229,13 @@ h3 {
 .btn--block {
   width: 100%;
 }
+/* Icon-only action buttons (e.g. table row actions) - no label text, so drop
+   the horizontal text padding and constrain to a square. */
+.btn--icon.btn--sm {
+  padding: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+}
 
 /* ---------- Form controls ---------- */
 input,
