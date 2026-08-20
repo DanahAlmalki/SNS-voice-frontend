@@ -22,6 +22,7 @@ const TIMEOUT_MESSAGES = {
   list: "انتهت مهلة تحميل الحملات — الخادم بطيء أو غير متاح",
   get: "انتهت مهلة تحميل الحملة — الخادم بطيء أو غير متاح",
   delete: "انتهت مهلة حذف الحملة — الخادم بطيء أو غير متاح",
+  start: "انتهت مهلة بدء الحملة — الخادم بطيء أو غير متاح",
 };
 
 // Shared fetch-with-timeout for every campaigns endpoint below.
@@ -107,6 +108,20 @@ export async function deleteCampaign(id) {
     timeoutKey: "delete",
     action: "تعذّر حذف الحملة",
   });
+}
+
+// Assumes POST /api/v1/campaigns/{id}/start begins dialing the campaign's
+// linked audience_id — like deleteCampaign, this route is not yet confirmed
+// against the backend contract. Backend may reply with an empty/204 body;
+// only `status` is read from it, defaulting to "in_progress" if absent.
+export async function startCampaign(id) {
+  const res = await request(`/api/v1/campaigns/${encodeURIComponent(id)}/start`, {
+    method: "POST",
+    timeoutKey: "start",
+    action: "تعذّر بدء الحملة",
+  });
+  const data = await res.json().catch(() => null);
+  return { status: data?.status ?? "in_progress" };
 }
 
 // Always 7 fixed fields per item (id, name, objective, status, audience_count,

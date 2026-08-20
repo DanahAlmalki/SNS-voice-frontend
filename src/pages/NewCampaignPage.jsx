@@ -13,9 +13,15 @@ import {
   Gauge,
   RotateCcw,
   Loader2,
+  Play,
 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
-import { createCampaign, getCampaign, updateCampaign } from "../lib/campaigns";
+import {
+  createCampaign,
+  getCampaign,
+  updateCampaign,
+  startCampaign,
+} from "../lib/campaigns";
 import { uploadAudience } from "../lib/audiences";
 import { listTemplates, findTemplate, describeTemplate } from "../lib/templates";
 import { OBJECTIVES } from "../lib/objectives";
@@ -70,6 +76,12 @@ export default function NewCampaignPage() {
   const [loadingCampaign, setLoadingCampaign] = useState(isEdit);
   const [loadError, setLoadError] = useState(null);
 
+  // status/audience_count from the same GET, only used to gate the Start button below.
+  const [campaignStatus, setCampaignStatus] = useState(null);
+  const [audienceCount, setAudienceCount] = useState(0);
+  const [startingCampaign, setStartingCampaign] = useState(false);
+  const [startError, setStartError] = useState(null);
+
   const [fieldError, setFieldError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -87,6 +99,8 @@ export default function NewCampaignPage() {
           overrides: data.overrides ?? {},
           objective: data.objective,
         });
+        setCampaignStatus(data.status ?? null);
+        setAudienceCount(data.audience_count ?? 0);
         set({
           name: data.name ?? "",
           ...(data.schedule
@@ -213,6 +227,17 @@ export default function NewCampaignPage() {
     }
   };
 
+  const handleStart = () => {
+    if (!window.confirm(t("newCampaign.confirmStart", { name: form.name })))
+      return;
+    setStartError(null);
+    setStartingCampaign(true);
+    startCampaign(id)
+      .then(({ status }) => setCampaignStatus(status))
+      .catch((err) => setStartError(err.message || t("newCampaign.startError")))
+      .finally(() => setStartingCampaign(false));
+  };
+
   return (
     <div className="new-campaign" dir={dir}>
       <header className="new-campaign__header">
@@ -237,6 +262,21 @@ export default function NewCampaignPage() {
           >
             {t("newCampaign.cancel")}
           </button>
+          {isEdit && campaignStatus === "not_started" && (
+            <button
+              className="btn btn--primary"
+              onClick={handleStart}
+              disabled={startingCampaign || submitting || !audienceCount}
+              title={!audienceCount ? t("newCampaign.startNoAudience") : undefined}
+            >
+              {startingCampaign ? (
+                <Loader2 className="spin" size={16} />
+              ) : (
+                <Play size={16} />
+              )}
+              {startingCampaign ? t("newCampaign.starting") : t("newCampaign.start")}
+            </button>
+          )}
           <button
             className="btn btn--primary"
             onClick={handleSubmit}
@@ -254,8 +294,10 @@ export default function NewCampaignPage() {
         </div>
       </header>
 
-      {(fieldError || submitError) && (
-        <p className="nc-msg nc-msg--err">{fieldError || submitError}</p>
+      {(fieldError || submitError || startError) && (
+        <p className="nc-msg nc-msg--err">
+          {fieldError || submitError || startError}
+        </p>
       )}
 
       {loadingCampaign ? (
