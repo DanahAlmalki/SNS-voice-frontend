@@ -139,7 +139,7 @@ export const translations = {
       dropTitle: "اسحب الملفات وأفلتها هنا",
       dropHint: "CSV أو Excel — حتى 20 ميجابايت للملف",
       audienceColumnsHint:
-        "الأعمدة المطلوبة في كل صف: full_name (الاسم الكامل) وid_last4 (آخر 4 أرقام من رقم الهوية).",
+        "الأعمدة المطلوبة في كل صف: phone (الجوال) وfull_name (الاسم الكامل) وid_last4 (آخر 4 أرقام من رقم الهوية). يمكن أيضاً كتابة أسماء الأعمدة بالعربي (مثل: الجوال، الاسم الكامل).",
       replaceAudienceHint: "رفع ملف جديد يستبدل ملف الجمهور الحالي لهذه الحملة.",
       addFile: "إضافة ملف",
       existingAudienceFallbackName: "ملف الجمهور الحالي",
@@ -463,7 +463,7 @@ export const translations = {
       dropTitle: "Drag & drop files here",
       dropHint: "CSV or Excel — up to 20 MB per file",
       audienceColumnsHint:
-        "Required columns per row: full_name and id_last4 (last 4 digits of the ID number).",
+        "Required columns per row: phone, full_name, and id_last4 (last 4 digits of the ID number). Arabic column headers (e.g. الجوال، الاسم الكامل) are also accepted.",
       replaceAudienceHint:
         "Uploading a new file replaces this campaign's current audience file.",
       addFile: "Add file",
