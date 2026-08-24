@@ -55,7 +55,11 @@ const int = (value, range) => {
 const text = (value) =>
   typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
 
-const isPreset = (id) => VOICE_PRESETS.some((v) => v.id === id);
+// Any provider's voice id is accepted here — the wizard only ever offers ids
+// fetched live from GET /api/v1/voices (src/lib/voiceModels.js), and the
+// backend (campaigns.py) is the real source of truth/validation anyway, so
+// this just needs to drop blanks, not re-validate against a fixed set.
+const isPreset = (id) => typeof id === "string" && id.trim() !== "";
 
 export function buildOverrides(data) {
   const overrides = {
@@ -76,6 +80,9 @@ export function buildOverrides(data) {
       0,
       MAX_STT_PROMPT,
     ),
+    // "" (default/unset) is dropped by text() so the backend/env default applies.
+    llm_provider: text(data.llmProvider),
+    llm_model: text(data.llmModel),
   };
 
   return Object.fromEntries(

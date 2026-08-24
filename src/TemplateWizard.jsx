@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Volume2,
@@ -12,7 +12,15 @@ import {
 } from "lucide-react";
 import CallModal from "./components/CallModal";
 import { buildPrompt } from "./lib/buildPrompt";
-import { buildOverrides, VOICE_PRESETS, voiceLabel, voiceHint } from "./lib/buildOverrides";
+import { buildOverrides } from "./lib/buildOverrides";
+import {
+  fetchVoices,
+  fetchLlmProviders,
+  groupVoicesByProvider,
+  splitVoiceLabel,
+  FALLBACK_VOICES,
+  FALLBACK_LLM_PROVIDERS,
+} from "./lib/voiceModels";
 import { initialData, findTemplate, upsertTemplate } from "./lib/templates";
 import { OBJECTIVES, objectiveTitle } from "./lib/objectives";
 import { useLanguage } from "./lib/i18n.jsx";
@@ -102,9 +110,20 @@ export default function TemplateWizard() {
   });
   const [showCall, setShowCall] = useState(false);
   const [callMode, setCallMode] = useState("browser");
+  const [voices, setVoices] = useState(FALLBACK_VOICES);
+  const [llmProviders, setLlmProviders] = useState(FALLBACK_LLM_PROVIDERS);
+
+  // Loaded once per wizard session — reflects whichever TTS/LLM engines are
+  // actually enabled on this deployment (see pipecat_server.py's GET
+  // /api/v1/voices + /api/v1/llm_providers) instead of a hardcoded list.
+  useEffect(() => {
+    fetchVoices().then(setVoices);
+    fetchLlmProviders().then(setLlmProviders);
+  }, []);
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
   const overrides = useMemo(() => buildOverrides(data), [data]);
+  const voiceGroups = useMemo(() => groupVoicesByProvider(voices), [voices]);
 
   const openCall = (mode) => {
     setCallMode(mode);
@@ -154,14 +173,18 @@ export default function TemplateWizard() {
 
           <div className="wizard__content">
             {step === 0 && <BasicsStep data={data} set={set} />}
-            {step === 1 && <VoiceStep data={data} set={set} />}
+            {step === 1 && (
+              <VoiceStep data={data} set={set} voiceGroups={voiceGroups} />
+            )}
             {step === 2 && (
               <ObjectiveStep data={data} choose={chooseObjective} />
             )}
             {step === 3 && <ScriptStep data={data} set={set} />}
             {step === 4 && <ObjectionsStep data={data} set={set} />}
             {step === 5 && <FallbackStep data={data} set={set} />}
-            {step === 6 && <AdvancedStep data={data} set={set} />}
+            {step === 6 && (
+              <AdvancedStep data={data} set={set} llmProviders={llmProviders} />
+            )}
           </div>
 
           <div className="wizard__nav">
@@ -271,23 +294,33 @@ function BasicsStep({ data, set }) {
   );
 }
 
-function VoiceStep({ data, set }) {
-  const { t, lang } = useLanguage();
+function VoiceStep({ data, set, voiceGroups }) {
+  const { t } = useLanguage();
   return (
     <section>
       <h2>{t("wizard.stepVoice")}</h2>
       <Field label={t("wizard.chooseVoiceLabel")}>
-        <div className="voice-list">
-          {VOICE_PRESETS.map((v) => (
-            <button
-              key={v.id}
-              className={`voice-chip ${data.voice === v.id ? "is-selected" : ""}`}
-              onClick={() => set({ voice: v.id })}
-            >
-              <Volume2 size={16} />
-              {voiceLabel(v, lang)}
-              <small>{voiceHint(v, lang)}</small>
-            </button>
+        <div className="voice-groups">
+          {voiceGroups.map((group) => (
+            <div className="voice-group" key={group.provider}>
+              <h4 className="voice-group__label">{group.label}</h4>
+              <div className="voice-list">
+                {group.voices.map((v) => {
+                  const { name, hint } = splitVoiceLabel(v.label);
+                  return (
+                    <button
+                      key={v.id}
+                      className={`voice-chip ${data.voice === v.id ? "is-selected" : ""}`}
+                      onClick={() => set({ voice: v.id })}
+                    >
+                      <Volume2 size={16} />
+                      {name}
+                      {hint && <small>{hint}</small>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </div>
       </Field>
@@ -556,14 +589,37 @@ function NumberField({ label, value, onChange, placeholder, step, min, max }) {
   );
 }
 
-function AdvancedStep({ data, set }) {
+function AdvancedStep({ data, set, llmProviders }) {
   const { t } = useLanguage();
+  const selectedProvider = llmProviders.find((p) => p.id === data.llmProvider);
   return (
     <section className="adv-step">
       <h2>{t("wizard.stepAdvanced")}</h2>
       <p className="muted">{t("wizard.advancedIntro")}</p>
 
       <h3 className="adv-group">Language model</h3>
+      <div className="adv-grid">
+        <Field label={t("wizard.llmProviderLabel")}>
+          <select
+            value={data.llmProvider}
+            onChange={(e) => set({ llmProvider: e.target.value })}
+          >
+            <option value="">{t("wizard.llmProviderDefault")}</option>
+            {llmProviders.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label={t("wizard.llmModelLabel")}>
+          <input
+            value={data.llmModel}
+            onChange={(e) => set({ llmModel: e.target.value })}
+            placeholder={selectedProvider?.model || t("wizard.llmModelPlaceholder")}
+          />
+        </Field>
+      </div>
       <div className="adv-grid">
         <NumberField
           label="Temperature"

@@ -220,6 +220,19 @@
 }
 
 /* Voice chips + segmented */
+.voice-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.voice-group__label {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
 .voice-list {
   display: flex;
   gap: var(--sp-2);

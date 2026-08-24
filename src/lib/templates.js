@@ -28,6 +28,10 @@ export const initialData = {
   temperature: "",
   seed: "",
   maxTokens: "",
+  // "" = backend/env default provider+model (see config.LLMConfig / GET
+  // /api/v1/llm_providers). Only sent as an override when non-blank.
+  llmProvider: "",
+  llmModel: "",
   ttsNumStep: "",
   ttsGuidanceScale: "",
   ttsAddShadda: true,
