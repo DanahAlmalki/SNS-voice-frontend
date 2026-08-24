@@ -40,6 +40,20 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           configure: attachAuth,
         },
+        // -> pipecat_server.py's GET /api/v1/voices + /api/v1/llm_providers
+        // (voice/model picker data for the wizard). Without these, the dev
+        // server's SPA fallback answers with index.html instead of JSON and
+        // the wizard silently degrades to its small hardcoded fallback list.
+        "/api/v1/voices": {
+          target,
+          changeOrigin: true,
+          configure: attachAuth,
+        },
+        "/api/v1/llm_providers": {
+          target,
+          changeOrigin: true,
+          configure: attachAuth,
+        },
         // -> twilio_bridge.py's POST /outbound-call (real phone call).
         "/api/v1/outbound-call": {
           target: bridgeTarget,
