@@ -591,15 +591,22 @@ function NumberField({ label, value, onChange, placeholder, step, min, max }) {
 
 function AdvancedStep({ data, set, llmProviders }) {
   const { t } = useLanguage();
-  const selectedProvider = llmProviders.find((p) => p.id === data.llmProvider);
-  const modelOptions = selectedProvider?.models;
-  // A template saved before this provider offered a curated list (or with a
-  // hand-typed value) may hold a model id that's not one of the options below
-  // - keep it selectable instead of silently hiding/discarding it.
-  const hasCustomModel =
-    modelOptions?.length &&
-    data.llmModel &&
-    !modelOptions.some((m) => m.id === data.llmModel);
+  // A single flat dropdown instead of a provider-select + model-select pair:
+  // picking "Groq" used to leave the model field a plain text box until the
+  // user also touched a second control, which made the model list invisible
+  // by default. Each curated model is now its own top-level option (already
+  // tags which provider it belongs to via the label); providers with no
+  // catalog (Azure OpenAI/vLLM - a single self-hosted deployment, nothing to
+  // list) contribute one "use this provider" option instead.
+  const llmOptions = llmProviders.flatMap((p) =>
+    p.models?.length
+      ? p.models.map((m) => ({ provider: p.id, model: m.id, label: `${p.label} — ${m.label}` }))
+      : [{ provider: p.id, model: "", label: p.label }]
+  );
+  const selectedValue = data.llmProvider ? `${data.llmProvider}::${data.llmModel || ""}` : "";
+  const hasMatch = llmOptions.some((o) => `${o.provider}::${o.model}` === selectedValue);
+  const selectedProviderLabel =
+    llmProviders.find((p) => p.id === data.llmProvider)?.label || data.llmProvider;
   return (
     <section className="adv-step">
       <h2>{t("wizard.stepAdvanced")}</h2>
@@ -607,42 +614,26 @@ function AdvancedStep({ data, set, llmProviders }) {
 
       <h3 className="adv-group">Language model</h3>
       <div className="adv-grid">
-        <Field label={t("wizard.llmProviderLabel")}>
+        <Field label={t("wizard.llmModelLabel")}>
           <select
-            value={data.llmProvider}
-            onChange={(e) => set({ llmProvider: e.target.value })}
+            value={hasMatch ? selectedValue : ""}
+            onChange={(e) => {
+              const [provider, model] = e.target.value.split("::");
+              set({ llmProvider: provider || "", llmModel: model || "" });
+            }}
           >
             <option value="">{t("wizard.llmProviderDefault")}</option>
-            {llmProviders.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
+            {!hasMatch && data.llmProvider && (
+              <option value={selectedValue}>
+                {selectedProviderLabel} — {data.llmModel || t("wizard.llmModelPlaceholder")}
+              </option>
+            )}
+            {llmOptions.map((o) => (
+              <option key={`${o.provider}::${o.model}`} value={`${o.provider}::${o.model}`}>
+                {o.label}
               </option>
             ))}
           </select>
-        </Field>
-        <Field label={t("wizard.llmModelLabel")}>
-          {modelOptions?.length ? (
-            <select
-              value={data.llmModel}
-              onChange={(e) => set({ llmModel: e.target.value })}
-            >
-              <option value="">{t("wizard.llmModelDefault")}</option>
-              {hasCustomModel && (
-                <option value={data.llmModel}>{data.llmModel}</option>
-              )}
-              {modelOptions.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              value={data.llmModel}
-              onChange={(e) => set({ llmModel: e.target.value })}
-              placeholder={selectedProvider?.model || t("wizard.llmModelPlaceholder")}
-            />
-          )}
         </Field>
       </div>
       <div className="adv-grid">
