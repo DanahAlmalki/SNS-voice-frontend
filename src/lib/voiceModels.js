@@ -34,6 +34,16 @@ export const FALLBACK_VOICES = [
 
 export const FALLBACK_LLM_PROVIDERS = [
   { id: "azure_openai", label: "Azure OpenAI", model: "" },
+  {
+    id: "groq",
+    label: "Groq",
+    model: "openai/gpt-oss-120b",
+    models: [
+      { id: "openai/gpt-oss-120b", label: "GPT-OSS 120B (default)" },
+      { id: "openai/gpt-oss-20b", label: "GPT-OSS 20B (faster)" },
+      { id: "allam-2-7b", label: "ALLaM 2 7B (Arabic-native)" },
+    ],
+  },
 ];
 
 export async function fetchVoices() {

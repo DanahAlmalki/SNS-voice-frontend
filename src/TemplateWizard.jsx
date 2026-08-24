@@ -592,6 +592,14 @@ function NumberField({ label, value, onChange, placeholder, step, min, max }) {
 function AdvancedStep({ data, set, llmProviders }) {
   const { t } = useLanguage();
   const selectedProvider = llmProviders.find((p) => p.id === data.llmProvider);
+  const modelOptions = selectedProvider?.models;
+  // A template saved before this provider offered a curated list (or with a
+  // hand-typed value) may hold a model id that's not one of the options below
+  // - keep it selectable instead of silently hiding/discarding it.
+  const hasCustomModel =
+    modelOptions?.length &&
+    data.llmModel &&
+    !modelOptions.some((m) => m.id === data.llmModel);
   return (
     <section className="adv-step">
       <h2>{t("wizard.stepAdvanced")}</h2>
@@ -613,11 +621,28 @@ function AdvancedStep({ data, set, llmProviders }) {
           </select>
         </Field>
         <Field label={t("wizard.llmModelLabel")}>
-          <input
-            value={data.llmModel}
-            onChange={(e) => set({ llmModel: e.target.value })}
-            placeholder={selectedProvider?.model || t("wizard.llmModelPlaceholder")}
-          />
+          {modelOptions?.length ? (
+            <select
+              value={data.llmModel}
+              onChange={(e) => set({ llmModel: e.target.value })}
+            >
+              <option value="">{t("wizard.llmModelDefault")}</option>
+              {hasCustomModel && (
+                <option value={data.llmModel}>{data.llmModel}</option>
+              )}
+              {modelOptions.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={data.llmModel}
+              onChange={(e) => set({ llmModel: e.target.value })}
+              placeholder={selectedProvider?.model || t("wizard.llmModelPlaceholder")}
+            />
+          )}
         </Field>
       </div>
       <div className="adv-grid">
