@@ -592,12 +592,13 @@ function NumberField({ label, value, onChange, placeholder, step, min, max }) {
 function AdvancedStep({ data, set, llmProviders }) {
   const { t } = useLanguage();
   // A single flat dropdown instead of a provider-select + model-select pair:
-  // picking "Groq" used to leave the model field a plain text box until the
-  // user also touched a second control, which made the model list invisible
-  // by default. Each curated model is now its own top-level option (already
-  // tags which provider it belongs to via the label); providers with no
-  // catalog (Azure OpenAI/vLLM - a single self-hosted deployment, nothing to
-  // list) contribute one "use this provider" option instead.
+  // picking a provider with a model catalog used to leave the model field a
+  // plain text box until the user also touched a second control, which made
+  // the model list invisible by default. Each curated model is now its own
+  // top-level option (already tags which provider it belongs to via the
+  // label); providers with no catalog (Azure OpenAI/vLLM - a single
+  // self-hosted deployment, nothing to list) contribute one "use this
+  // provider" option instead.
   const llmOptions = llmProviders.flatMap((p) =>
     p.models?.length
       ? p.models.map((m) => ({ provider: p.id, model: m.id, label: `${p.label} — ${m.label}` }))

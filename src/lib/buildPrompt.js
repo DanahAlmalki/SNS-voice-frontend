@@ -57,7 +57,7 @@ function buildRoleSection(data) {
       ? `- Persona / personality: ${PERSONALITY_LABEL[data.personality]}`
       : null,
     // Falls back to the raw voice id for providers added after this static
-    // map (Groq/NAMAA presets) so the prompt still names the chosen voice.
+    // map (NAMAA presets) so the prompt still names the chosen voice.
     line("Voice", VOICE_LABEL[data.voice] || data.voice),
     data.speed && SPEED_LABEL[data.speed]
       ? `- Speaking speed: ${SPEED_LABEL[data.speed]}`

@@ -34,16 +34,6 @@ export const FALLBACK_VOICES = [
 
 export const FALLBACK_LLM_PROVIDERS = [
   { id: "azure_openai", label: "Azure OpenAI", model: "" },
-  {
-    id: "groq",
-    label: "Groq",
-    model: "openai/gpt-oss-120b",
-    models: [
-      { id: "openai/gpt-oss-120b", label: "GPT-OSS 120B (default)" },
-      { id: "openai/gpt-oss-20b", label: "GPT-OSS 20B (faster)" },
-      { id: "allam-2-7b", label: "ALLaM 2 7B (Arabic-native)" },
-    ],
-  },
 ];
 
 export async function fetchVoices() {
@@ -68,10 +58,9 @@ export async function fetchLlmProviders() {
 // only supplies display order + a friendlier vs. raw provider id.
 const PROVIDER_DISPLAY = {
   omnivoice: "OmniVoice",
-  groq: "Groq",
   namaa: "NAMAA",
 };
-const PROVIDER_ORDER = ["omnivoice", "groq", "namaa"];
+const PROVIDER_ORDER = ["omnivoice", "namaa"];
 
 export function providerLabel(providerId) {
   return PROVIDER_DISPLAY[providerId] || providerId;
@@ -97,9 +86,9 @@ export function groupVoicesByProvider(voices) {
   }));
 }
 
-// Backend labels look like "سلوى (نسائي)" / "أحمد (Groq، رجالي)" — split into
-// a bold name + a small hint so new providers render with the same chip
-// layout the wizard already used for the original 5 OmniVoice presets.
+// Backend labels look like "سلوى (نسائي)" — split into a bold name + a small
+// hint so new providers render with the same chip layout the wizard already
+// used for the original 5 OmniVoice presets.
 export function splitVoiceLabel(label) {
   const match = /^(.*?)\s*\(([^)]+)\)\s*$/.exec(label || "");
   return match ? { name: match[1], hint: match[2] } : { name: label || "", hint: "" };
